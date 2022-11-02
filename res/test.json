@@ -1,0 +1,40 @@
+{
+  "nodes": {
+    "MiddleNode": {
+      "name": "Category1",
+      "children": [
+        {
+          "MiddleNode": {
+            "name": "Category2",
+            "children": [
+              {
+                "EndNode": {
+                  "name": "Node1",
+                  "id": 0
+                }
+              },
+              {
+                "EndNode": {
+                  "name": "Node2",
+                  "id": 1
+                }
+              }
+            ]
+          }
+        },
+        {
+          "EndNode": {
+            "name": "Node3",
+            "id": 2
+          }
+        },
+        {
+          "EndNode": {
+            "name": "Node4",
+            "id": 3
+          }
+        }
+      ]
+    }
+  }
+}

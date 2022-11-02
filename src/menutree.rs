@@ -1,4 +1,8 @@
+use serde::{Serialize, Deserialize};
+
 /// The menu trees represent nodes in the delta-v map and the categories they are put into
+#[derive(Serialize, Deserialize)]
+#[cfg_attr(test, derive(PartialEq, Debug))]
 pub enum MenuTree {
     /// A node representing a category other nodes can be put into
     MiddleNode { name: String, children: Vec<MenuTree> },
@@ -84,6 +88,7 @@ impl MenuTree {
 
 #[cfg(test)]
 mod tests {
+    use std::fs::File;
     use crate::menutree::MenuTree;
     use crate::menutree::MenuTree::{EndNode, MiddleNode};
 
@@ -137,7 +142,7 @@ mod tests {
                 panic!("The \"Category1\" node should be found");
             }
             Some(result) => {
-                assert_eq!(result.get_id(), 2, "\"Node3\" should be found, not \"{}\"", result.get_name());
+                assert_eq!(result.get_name(), "Category1", "\"Category1\" should be found, not \"{}\"", result.get_name());
             }
         }
 
@@ -147,7 +152,7 @@ mod tests {
                 panic!("The \"Node3\" node should be found");
             }
             Some(result) => {
-                assert_eq!(result.get_id(), usize::MAX, "\"Category1\" should be found, not \"{}\"", result.get_name());
+                assert_eq!(result.get_id(), 2, "\"Node3\" should be found, not \"{}\"", result.get_name());
             }
         }
 
@@ -158,5 +163,21 @@ mod tests {
                 panic!("No node should be found, but node \"{}\" was found", tree.get_name());
             }
         }
+    }
+
+    #[test]
+    #[should_panic(expected="MiddleNodes don't have ids")]
+    fn test_id_panic() {
+        get_test_tree().get_id();
+    }
+
+    #[test]
+    fn test_deserialize() {
+        let file = File::open("res/test.json").unwrap();
+        let json: serde_json::Value = serde_json::from_reader(file).unwrap();
+        let json = json.get("nodes").unwrap();
+        let tree: MenuTree = serde_json::from_value(json.to_owned()).unwrap();
+
+        assert_eq!(get_test_tree(), tree, "The tree hasn't been deserialized properly");
     }
 }
