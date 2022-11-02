@@ -1,5 +1,5 @@
 {
-  "nodes": {
+  "menu_tree": {
     "MiddleNode": {
       "name": "Category1",
       "children": [
@@ -36,5 +36,32 @@
         }
       ]
     }
+  },
+  "graph": {
+    "nodes": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "node_holes": [],
+    "edge_property": "undirected",
+    "edges": [
+      [
+        0,
+        1,
+        100
+      ],
+      [
+        1,
+        2,
+        400
+      ],
+      [
+        2,
+        3,
+        900
+      ]
+    ]
   }
 }

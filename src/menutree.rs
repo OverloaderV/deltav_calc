@@ -1,8 +1,8 @@
 use serde::{Serialize, Deserialize};
 
 /// The menu trees represent nodes in the delta-v map and the categories they are put into
-#[derive(Serialize, Deserialize)]
-#[cfg_attr(test, derive(PartialEq, Debug))]
+#[derive(Deserialize)]
+#[cfg_attr(test, derive(PartialEq, Debug, Serialize))]
 pub enum MenuTree {
     /// A node representing a category other nodes can be put into
     MiddleNode { name: String, children: Vec<MenuTree> },
@@ -25,7 +25,7 @@ impl MenuTree {
     }
 
     fn get_name(&self) -> &str {
-        match self {
+        return match self {
             MenuTree::MiddleNode { name, .. } |
             MenuTree::EndNode { name, .. } => {
                 name
@@ -87,12 +87,12 @@ impl MenuTree {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use std::fs::File;
     use crate::menutree::MenuTree;
     use crate::menutree::MenuTree::{EndNode, MiddleNode};
 
-    fn get_test_tree() -> MenuTree {
+    pub fn get_test_tree() -> MenuTree {
         MiddleNode {
             name: String::from("Category1"),
             children: vec![
@@ -175,7 +175,7 @@ mod tests {
     fn test_deserialize() {
         let file = File::open("res/test.json").unwrap();
         let json: serde_json::Value = serde_json::from_reader(file).unwrap();
-        let json = json.get("nodes").unwrap();
+        let json = json.get("menu_tree").unwrap();
         let tree: MenuTree = serde_json::from_value(json.to_owned()).unwrap();
 
         assert_eq!(get_test_tree(), tree, "The tree hasn't been deserialized properly");
