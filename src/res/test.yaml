@@ -1,0 +1,14 @@
+---
+ nodes:
+  name: "Category1"
+  children:
+    - name: "Category2"
+      children:
+        - name: "Node1"
+          id: 0
+        - name: "Node2"
+          id: 1
+    - name: "Node3"
+      id: 2
+    - name: "Node4"
+      id: 3
