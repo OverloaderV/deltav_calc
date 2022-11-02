@@ -1,196 +1,162 @@
 /// The menu trees represent nodes in the delta-v map and the categories they are put into
-pub trait MenuTree: PartialEq<Box<dyn MenuTree>> {
-    /// Get the id of the node
-    ///
-    /// If it's a node without id, return the max value
-    fn get_id(&self) -> usize;
+pub enum MenuTree {
+    /// A node representing a category other nodes can be put into
+    MiddleNode { name: String, children: Vec<MenuTree> },
 
-    /// Get the name of the node
-    fn get_name(&self) -> &str;
-
-    /// Get the sub-node with the given id
-    fn search_by_id(&self, id: usize) -> Option<&dyn MenuTree>;
-
-    /// Get the sub-node with the given name
-    fn search_by_name(&self, name: &str) -> Option<&dyn MenuTree>;
-
-    /// Compares two menuTrees and returns true if they're equal
-    fn eq(&self, rhs: &dyn MenuTree) -> bool;
+    /// A node holding an id to be used in the graph
+    EndNode { name: String, id: usize },
 }
 
-pub struct MiddleNode {
-    name: String,
-    children: Vec<Box<dyn MenuTree>>,
-}
-
-impl MenuTree for MiddleNode {
+impl MenuTree {
+    /// Gets the id of the node. if it's a middle node it panics
     fn get_id(&self) -> usize {
-        return usize::MAX;
+        match self {
+            MenuTree::MiddleNode { .. } => {
+                panic!("MiddleNodes don't have ids");
+            }
+            MenuTree::EndNode { id, .. } => {
+                id.to_owned()
+            }
+        }
     }
 
     fn get_name(&self) -> &str {
-        &self.name
+        match self {
+            MenuTree::MiddleNode { name, .. } |
+            MenuTree::EndNode { name, .. } => {
+                name
+            }
+        }
     }
 
-    fn search_by_id(&self, id: usize) -> Option<&dyn MenuTree> {
-        for child in &self.children {
-            match child.search_by_id(id) {
-                None => {
-                    continue;
+    fn search_by_id(&self, search_id: usize) -> Option<&MenuTree> {
+        match self {
+            MenuTree::MiddleNode { children, .. } => {
+                for child in children {
+                    let result = child.search_by_id(search_id);
+                    match result {
+                        None => {}
+                        Some(_) => { return result; }
+                    }
                 }
-                Some(value) => {
-                    return Some(value);
+
+                None
+            }
+            MenuTree::EndNode { id, .. } => {
+                if id.to_owned() == search_id {
+                    Some(self)
+                } else {
+                    None
                 }
             }
         }
-
-        None
     }
 
-    fn search_by_name(&self, name: &str) -> Option<&dyn MenuTree> {
-        if self.name == name {
-            return Some(self);
-        }
-
-        for child in &self.children {
-            match child.search_by_name(name) {
-                None => {
-                    continue;
-                }
-                Some(value) => {
-                    return Some(value);
+    fn search_by_name(&self, search_name: &str) -> Option<&MenuTree> {
+        match self {
+            MenuTree::EndNode { name, .. } => {
+                if name == search_name {
+                    Some(self)
+                } else {
+                    None
                 }
             }
-        }
 
-        None
-    }
-}
+            MenuTree::MiddleNode { name, children } => {
+                if name == search_name {
+                    return Some(self);
+                }
 
-pub struct EndNode {
-    name: String,
-    id: usize,
-}
+                for child in children {
+                    let result = child.search_by_name(search_name);
 
-impl MenuTree for EndNode {
-    fn get_id(&self) -> usize {
-        self.id
-    }
+                    match result {
+                        None => {}
+                        Some(_) => { return result; }
+                    }
+                }
 
-    fn get_name(&self) -> &str {
-        &self.name
-    }
-
-    fn search_by_id(&self, id: usize) -> Option<&dyn MenuTree> {
-        if self.id == id {
-            Some(self)
-        } else {
-            None
-        }
-    }
-
-    fn search_by_name(&self, name: &str) -> Option<&dyn MenuTree> {
-        if self.name == name {
-            Some(self)
-        } else {
-            None
-        }
-    }
-}
-
-fn from_yaml(yaml: &serde_yaml::Mapping) -> Box<dyn MenuTree>{
-    fn read_middle(yaml: &serde_yaml::Mapping) -> Box<MiddleNode> {
-        let name = yaml.get("name").unwrap().as_str().unwrap().to_string();
-        let children_yaml = yaml.get("children").unwrap().as_sequence().unwrap();
-
-        let mut children: Vec<Box<dyn MenuTree>> = vec![];
-        for child in children_yaml {
-            let child = child.as_mapping().unwrap();
-            if yaml.contains_key("children") {
-                children.push(read_middle(child));
-            } else {
-                children.push(read_end(child));
+                None
             }
         }
-
-        Box::new(MiddleNode {name, children})
-    }
-    fn read_end(yaml: &serde_yaml::Mapping) -> Box<EndNode> {
-        let name = yaml.get("name").unwrap().as_str().unwrap().to_string();
-        let id = yaml.get("id").unwrap().as_u64().unwrap() as usize;
-
-        Box::new(EndNode{name, id})
-    }
-
-    if yaml.contains_key("children") {
-        read_middle(yaml)
-    } else {
-        read_end(yaml)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::menutree::*;
+    use crate::menutree::MenuTree;
+    use crate::menutree::MenuTree::{EndNode, MiddleNode};
 
-    use std::fs::File;
-
-    use serde::*;
-
-    fn get_test_tree() -> Box<dyn MenuTree> {
-        Box::new(MiddleNode {
+    fn get_test_tree() -> MenuTree {
+        MiddleNode {
             name: String::from("Category1"),
             children: vec![
-                Box::new(MiddleNode {
+                MiddleNode {
                     name: String::from("Category2"),
                     children: vec![
-                        Box::new(EndNode { name: String::from("Node1"), id: 0 }),
-                        Box::new(EndNode { name: String::from("Node2"), id: 1 }),
+                        EndNode { name: String::from("Node1"), id: 0 },
+                        EndNode { name: String::from("Node2"), id: 1 },
                     ],
-                }),
-                Box::new(EndNode { name: String::from("Node3"), id: 2 }),
-                Box::new(EndNode { name: String::from("Node4"), id: 3 }),
+                },
+                EndNode { name: String::from("Node3"), id: 2 },
+                EndNode { name: String::from("Node4"), id: 3 },
             ],
-        })
+        }
     }
 
     #[test]
-    fn test_id_search() {
+    fn test_search_by_id() {
         let test_tree = get_test_tree();
 
         let result = test_tree.search_by_id(1);
-        assert!(result.is_some(), "The result should be the \"Node2\" Node");
-        let result = result.unwrap();
-        assert_eq!(result.get_name(), "Node2", "The result should be the \"Node2\" Node");
+        match result {
+            None => {
+                panic!("The \"Node2\" node should be found");
+            }
+            Some(result) => {
+                assert_eq!(result.get_name(), "Node2", "\"Node2\" should be found, not \"{}\"", result.get_name());
+            }
+        }
 
-        let result = test_tree.search_by_id(100);
-        assert!(result.is_none(), "There should be no node with the id 100");
+        let result = test_tree.search_by_id(1000);
+        match result {
+            None => {}
+            Some(tree) => {
+                panic!("No node should be found, but node \"{}\" was found", tree.get_name());
+            }
+        }
     }
 
     #[test]
-    fn test_name_search() {
+    fn test_search_by_name() {
         let test_tree = get_test_tree();
 
-        let result = test_tree.search_by_name("Node1");
-        assert!(result.is_some(), "The result should be the Node with id 0");
-        let result = result.unwrap();
-        assert_eq!(result.get_id(), 0, "The result should be the Node with the id 0");
-
-        let result = test_tree.search_by_name("Doesn't exist");
-        assert!(result.is_none(), "There should be no node with the name \"Doesn't exist\"");
-
         let result = test_tree.search_by_name("Category1");
-        assert!(result.is_some(), "The result should be the Category1 Node");
-        let result = result.unwrap();
-        assert_eq!(result.get_id(), usize::MAX, "The id of the Category1 Node should be {}", usize::MAX);
-    }
+        match result {
+            None => {
+                panic!("The \"Category1\" node should be found");
+            }
+            Some(result) => {
+                assert_eq!(result.get_id(), 2, "\"Node3\" should be found, not \"{}\"", result.get_name());
+            }
+        }
 
-    #[test]
-    fn test_yaml() {
-        let file = File::open("src/res/test.yaml");
-        let yaml: serde_yaml::Value = serde_yaml::from_reader(file).unwrap();
+        let result = test_tree.search_by_name("Node3");
+        match result {
+            None => {
+                panic!("The \"Node3\" node should be found");
+            }
+            Some(result) => {
+                assert_eq!(result.get_id(), usize::MAX, "\"Category1\" should be found, not \"{}\"", result.get_name());
+            }
+        }
 
-        let yaml = yaml.as_mapping().unwrap();
-        let nodes = yaml.get("nodes").unwrap().as_mapping().unwrap();
+        let result = test_tree.search_by_name("test");
+        match result {
+            None => {}
+            Some(tree) => {
+                panic!("No node should be found, but node \"{}\" was found", tree.get_name());
+            }
+        }
     }
 }
