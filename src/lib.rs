@@ -9,6 +9,78 @@ use serde::{Serialize, Deserialize};
 pub use crate::menutree::MenuTree;
 
 /// Represents a usable deltav map
+///
+/// # Deserialization
+/// A DeltavMap can be deserialized from a JSON file like this:
+/// ```json
+/// {
+///   "menu_tree": {
+///     "MiddleNode": {
+///       "name": "Category1",
+///       "children": [
+///         {
+///           "MiddleNode": {
+///             "name": "Category2",
+///             "children": [
+///               {
+///                 "EndNode": {
+///                   "name": "Node1",
+///                   "index": 0
+///                 }
+///               },
+///               {
+///                 "EndNode": {
+///                   "name": "Node2",
+///                   "index": 1
+///                 }
+///               }
+///             ]
+///           }
+///         },
+///         {
+///           "EndNode": {
+///             "name": "Node3",
+///             "index": 2
+///           }
+///         },
+///         {
+///           "EndNode": {
+///             "name": "Node4",
+///             "index": 3
+///           }
+///         }
+///       ]
+///     }
+///   },
+///   "graph": {
+///     "nodes": [
+///       "Node1",
+///       "Node2",
+///       "Node3",
+///       "Node4"
+///     ],
+///     "node_holes": [],
+///     "edge_property": "undirected",
+///     "edges": [
+///       [
+///         0,
+///         1,
+///         900
+///       ],
+///       [
+///         1,
+///         2,
+///         80
+///       ],
+///       [
+///         2,
+///         3,
+///         50
+///       ]
+///     ]
+///   }
+/// }
+/// ```
 #[derive(Deserialize)]
 #[cfg_attr(test, derive(Debug, Serialize))]
 pub struct DeltavMap {
