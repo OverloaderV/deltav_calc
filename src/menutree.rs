@@ -9,7 +9,7 @@ pub enum MenuTree {
     /// A node representing a category other nodes can be put into
     MiddleNode { name: String, children: Vec<MenuTree> },
 
-    /// A node holding an id to be used in the graph
+    /// A node holding an index to be used in the graph
     EndNode { name: String, index: NodeIndex },
 }
 

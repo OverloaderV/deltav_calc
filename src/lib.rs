@@ -1,8 +1,12 @@
-pub mod menutree;
+//! A crate to generate a graph of the popular delta-v maps used in the game Kerbal Space Program.
+//! It allows you to do opperations on an immutable [graph](https://docs.rs/petgraph/latest/petgraph/)
+//! and get a tree representation of the graphs nodes to be used in menus
+
+mod menutree;
 
 use petgraph::graph::UnGraph;
 use serde::{Serialize, Deserialize};
-use crate::menutree::MenuTree;
+pub use crate::menutree::MenuTree;
 
 /// Represents a usable deltav map
 #[derive(Deserialize)]
@@ -13,11 +17,13 @@ pub struct DeltavMap {
 }
 
 impl DeltavMap {
-    fn get_menu_tree(&self) -> &MenuTree {
+    /// The menu tree you can use to structure your menu
+    pub fn get_menu_tree(&self) -> &MenuTree {
         &self.menu_tree
     }
 
-    fn get_graph(&self) -> &UnGraph<String, i32> {
+    /// The graph you can use to calculate deltav costs. It's a graph from the [petgraph](https://docs.rs/petgraph/latest/petgraph/) crate
+    pub fn get_graph(&self) -> &UnGraph<String, i32> {
         &self.graph
     }
 }
