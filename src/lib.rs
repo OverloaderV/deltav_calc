@@ -1,15 +1,17 @@
-pub mod menutree;
+//! A crate to generate a graph of the popular delta-v maps used in the game Kerbal Space Program.
+//! It allows you to do opperations on an immutable [graph](https://docs.rs/petgraph/latest/petgraph/)
+//! and get a tree representation of the graphs nodes to be used in menus
 
-use std::fs::File;
-use std::path::Path;
-use petgraph::graph::{NodeIndex, UnGraph};
+mod menutree;
+
+use petgraph::graph::UnGraph;
 use serde::{Serialize, Deserialize};
-use crate::menutree::MenuTree;
-use crate::MenuTree::{EndNode, MiddleNode};
+pub use crate::menutree::MenuTree;
 
 /// Represents a usable deltav map
 ///
-/// Can be deserialized from a json value like this:
+/// # Deserialization
+/// A DeltavMap can be deserialized from a JSON file like this:
 /// ```json
 /// {
 ///   "menu_tree": {
@@ -23,13 +25,13 @@ use crate::MenuTree::{EndNode, MiddleNode};
 ///               {
 ///                 "EndNode": {
 ///                   "name": "Node1",
-///                   "id": 0
+///                   "index": 0
 ///                 }
 ///               },
 ///               {
 ///                 "EndNode": {
 ///                   "name": "Node2",
-///                   "id": 1
+///                   "index": 1
 ///                 }
 ///               }
 ///             ]
@@ -38,13 +40,13 @@ use crate::MenuTree::{EndNode, MiddleNode};
 ///         {
 ///           "EndNode": {
 ///             "name": "Node3",
-///             "id": 2
+///             "index": 2
 ///           }
 ///         },
 ///         {
 ///           "EndNode": {
 ///             "name": "Node4",
-///             "id": 3
+///             "index": 3
 ///           }
 ///         }
 ///       ]
@@ -52,10 +54,10 @@ use crate::MenuTree::{EndNode, MiddleNode};
 ///   },
 ///   "graph": {
 ///     "nodes": [
-///       0,
-///       1,
-///       2,
-///       3
+///       "Node1",
+///       "Node2",
+///       "Node3",
+///       "Node4"
 ///     ],
 ///     "node_holes": [],
 ///     "edge_property": "undirected",
@@ -63,17 +65,17 @@ use crate::MenuTree::{EndNode, MiddleNode};
 ///       [
 ///         0,
 ///         1,
-///         100
+///         900
 ///       ],
 ///       [
 ///         1,
 ///         2,
-///         400
+///         80
 ///       ],
 ///       [
 ///         2,
 ///         3,
-///         900
+///         50
 ///       ]
 ///     ]
 ///   }
@@ -83,15 +85,17 @@ use crate::MenuTree::{EndNode, MiddleNode};
 #[cfg_attr(test, derive(Debug, Serialize))]
 pub struct DeltavMap {
     menu_tree: MenuTree,
-    graph: UnGraph<usize, i32>
+    graph: UnGraph<String, i32>
 }
 
 impl DeltavMap {
-    fn get_menu_tree(&self) -> &MenuTree {
+    /// The menu tree you can use to structure your menu
+    pub fn get_menu_tree(&self) -> &MenuTree {
         &self.menu_tree
     }
 
-    fn get_graph(&self) -> &UnGraph<usize, i32> {
+    /// The graph you can use to calculate deltav costs. It's a graph from the [petgraph](https://docs.rs/petgraph/latest/petgraph/) crate
+    pub fn get_graph(&self) -> &UnGraph<String, i32> {
         &self.graph
     }
 
@@ -231,32 +235,34 @@ impl PartialEq for DeltavMap {
 #[cfg(test)]
 mod tests {
     use std::fs::File;
-    use petgraph::Graph;
     use petgraph::graph::UnGraph;
-    use crate::menutree::tests::get_test_tree;
     use crate::DeltavMap;
+    use crate::MenuTree::{EndNode, MiddleNode};
 
-    fn get_test_graph() -> UnGraph<usize, i32>{
-        let mut graph: UnGraph<usize, i32> = UnGraph::new_undirected();
-
-        let node1 = graph.add_node(0);
-        let node2 = graph.add_node(1);
-        let node3 = graph.add_node(2);
-        let node4 = graph.add_node(3);
-
-
-        graph.add_edge(node1, node2, 100);
-        graph.add_edge(node2, node3, 400);
-        graph.add_edge(node3, node4, 900);
-
-        graph
-    }
 
     fn get_test_map() -> DeltavMap {
-        let menu_tree = get_test_tree();
-        let graph = get_test_graph();
+        let mut graph: UnGraph<String, i32> = UnGraph::new_undirected();
 
-        DeltavMap {menu_tree, graph}
+        let menu_tree = MiddleNode { name: "Category1".to_owned(), children: vec![
+            MiddleNode { name: "Category2".to_owned(), children: vec![
+                EndNode { name: String::from("Node1"), index: graph.add_node(String::from("Node1"))},
+                EndNode { name: String::from("Node2"), index: graph.add_node(String::from("Node2"))},
+            ] },
+            EndNode { name: String::from("Node3"), index: graph.add_node(String::from("Node3")) },
+            EndNode { name: String::from("Node4"), index: graph.add_node(String::from("Node4")) },
+        ] };
+
+        graph.add_edge(menu_tree["Node1"].get_index().clone(),
+                       menu_tree["Node2"].get_index().clone(),
+                       900);
+        graph.add_edge(menu_tree["Node2"].get_index().clone(),
+                       menu_tree["Node3"].get_index().clone(),
+                       80);
+        graph.add_edge(menu_tree["Node3"].get_index().clone(),
+                       menu_tree["Node4"].get_index().clone(),
+                       50);
+
+        DeltavMap { menu_tree, graph }
     }
 
     #[test]

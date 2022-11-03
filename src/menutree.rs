@@ -1,3 +1,5 @@
+use std::ops::Index;
+use petgraph::graph::NodeIndex;
 use serde::{Serialize, Deserialize};
 
 /// The menu trees represent nodes in the delta-v map and the categories they are put into
@@ -7,24 +9,24 @@ pub enum MenuTree {
     /// A node representing a category other nodes can be put into
     MiddleNode { name: String, children: Vec<MenuTree> },
 
-    /// A node holding an id to be used in the graph
-    EndNode { name: String, id: usize },
+    /// A node holding an index to be used in the graph
+    EndNode { name: String, index: NodeIndex },
 }
 
 impl MenuTree {
     /// Gets the id of the node. if it's a middle node it panics
-    fn get_id(&self) -> usize {
+    pub fn get_index(&self) -> &NodeIndex {
         match self {
             MenuTree::MiddleNode { .. } => {
-                panic!("MiddleNodes don't have ids");
+                panic!("MiddleNodes don't have indices");
             }
-            MenuTree::EndNode { id, .. } => {
-                id.to_owned()
+            MenuTree::EndNode { index, .. } => {
+                index
             }
         }
     }
 
-    fn get_name(&self) -> &str {
+    pub fn get_name(&self) -> &str {
         return match self {
             MenuTree::MiddleNode { name, .. } |
             MenuTree::EndNode { name, .. } => {
@@ -33,30 +35,7 @@ impl MenuTree {
         }
     }
 
-    fn search_by_id(&self, search_id: usize) -> Option<&MenuTree> {
-        match self {
-            MenuTree::MiddleNode { children, .. } => {
-                for child in children {
-                    let result = child.search_by_id(search_id);
-                    match result {
-                        None => {}
-                        Some(_) => { return result; }
-                    }
-                }
-
-                None
-            }
-            MenuTree::EndNode { id, .. } => {
-                if id.to_owned() == search_id {
-                    Some(self)
-                } else {
-                    None
-                }
-            }
-        }
-    }
-
-    fn search_by_name(&self, search_name: &str) -> Option<&MenuTree> {
+    pub fn search(&self, search_name: &str) -> Option<&MenuTree> {
         match self {
             MenuTree::EndNode { name, .. } => {
                 if name == search_name {
@@ -72,7 +51,7 @@ impl MenuTree {
                 }
 
                 for child in children {
-                    let result = child.search_by_name(search_name);
+                    let result = child.search(search_name);
 
                     match result {
                         None => {}
@@ -86,98 +65,91 @@ impl MenuTree {
     }
 }
 
+impl Index<&str> for MenuTree {
+    type Output = MenuTree;
+
+    fn index(&self, index: &str) -> &Self::Output {
+        self.search(index).expect("No node with the given name")
+    }
+}
+
 #[cfg(test)]
 pub mod tests {
     use std::fs::File;
-    use crate::menutree::MenuTree;
-    use crate::menutree::MenuTree::{EndNode, MiddleNode};
+    use std::io::BufReader;
+    use petgraph::graph::NodeIndex;
+    use crate::MenuTree;
+    use crate::MenuTree::{EndNode, MiddleNode};
 
     pub fn get_test_tree() -> MenuTree {
-        MiddleNode {
-            name: String::from("Category1"),
-            children: vec![
-                MiddleNode {
-                    name: String::from("Category2"),
-                    children: vec![
-                        EndNode { name: String::from("Node1"), id: 0 },
-                        EndNode { name: String::from("Node2"), id: 1 },
-                    ],
-                },
-                EndNode { name: String::from("Node3"), id: 2 },
-                EndNode { name: String::from("Node4"), id: 3 },
-            ],
-        }
+        MiddleNode { name: String::from("Category1"), children: vec![
+            MiddleNode { name: String::from("Category2"), children: vec![
+                EndNode { name: String::from("Node1"), index: NodeIndex::new(0) },
+                EndNode { name: String::from("Node2"), index: NodeIndex::new(1) }
+            ] },
+            EndNode { name: String::from("Node3"), index: NodeIndex::new(2) },
+            EndNode { name: String::from("Node4"), index: NodeIndex::new(3) }
+        ] }
     }
 
     #[test]
-    fn test_search_by_id() {
+    fn test_search() {
         let test_tree = get_test_tree();
 
-        let result = test_tree.search_by_id(1);
+        let result = test_tree.search("Category2");
         match result {
             None => {
-                panic!("The \"Node2\" node should be found");
+                panic!("The \"Category2\" node should be found");
             }
             Some(result) => {
-                assert_eq!(result.get_name(), "Node2", "\"Node2\" should be found, not \"{}\"", result.get_name());
+                assert_eq!(result.get_name(), "Category2");
             }
         }
 
-        let result = test_tree.search_by_id(1000);
+        let result = test_tree.search("Node1");
         match result {
-            None => {}
-            Some(tree) => {
-                panic!("No node should be found, but node \"{}\" was found", tree.get_name());
+            None => {
+                panic!("The \"Node1\" node should be found");
+            }
+            Some(result) => {
+                assert_eq!(result.get_name(), "Node1");
+                assert_eq!(result.get_index().index(), 0);
             }
         }
     }
 
     #[test]
-    fn test_search_by_name() {
-        let test_tree = get_test_tree();
-
-        let result = test_tree.search_by_name("Category1");
-        match result {
-            None => {
-                panic!("The \"Category1\" node should be found");
-            }
-            Some(result) => {
-                assert_eq!(result.get_name(), "Category1", "\"Category1\" should be found, not \"{}\"", result.get_name());
-            }
-        }
-
-        let result = test_tree.search_by_name("Node3");
-        match result {
-            None => {
-                panic!("The \"Node3\" node should be found");
-            }
-            Some(result) => {
-                assert_eq!(result.get_id(), 2, "\"Node3\" should be found, not \"{}\"", result.get_name());
-            }
-        }
-
-        let result = test_tree.search_by_name("test");
-        match result {
-            None => {}
-            Some(tree) => {
-                panic!("No node should be found, but node \"{}\" was found", tree.get_name());
-            }
-        }
-    }
-
-    #[test]
-    #[should_panic(expected="MiddleNodes don't have ids")]
-    fn test_id_panic() {
-        get_test_tree().get_id();
+    #[should_panic(expected="MiddleNodes don't have indices")]
+    fn test_get_index_panic() {
+        get_test_tree().get_index();
     }
 
     #[test]
     fn test_deserialize() {
-        let file = File::open("res/test.json").unwrap();
-        let json: serde_json::Value = serde_json::from_reader(file).unwrap();
+        let f = File::open("res/test.json").unwrap();
+        let f = BufReader::new(f);
+        let json: serde_json::Value = serde_json::from_reader(f).unwrap();
         let json = json.get("menu_tree").unwrap();
-        let tree: MenuTree = serde_json::from_value(json.to_owned()).unwrap();
 
-        assert_eq!(get_test_tree(), tree, "The tree hasn't been deserialized properly");
+        let deserialized: MenuTree = serde_json::from_value(json.clone()).unwrap();
+        assert_eq!(deserialized, get_test_tree());
+    }
+    
+    #[test]
+    fn test_index() {
+        let test_tree = get_test_tree();
+
+        let result = &test_tree["Category2"];
+        assert_eq!(result.get_name(), "Category2");
+
+        let result = &test_tree["Node1"];
+        assert_eq!(result.get_name(), "Node1");
+        assert_eq!(result.get_index().index(), 0);
+    }
+
+    #[test]
+    #[should_panic(expected="No node with the given name")]
+    fn test_index_panic() {
+        let _ = &get_test_tree()["test"];
     }
 }

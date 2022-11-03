@@ -10,13 +10,13 @@
               {
                 "EndNode": {
                   "name": "Node1",
-                  "id": 0
+                  "index": 0
                 }
               },
               {
                 "EndNode": {
                   "name": "Node2",
-                  "id": 1
+                  "index": 1
                 }
               }
             ]
@@ -25,13 +25,13 @@
         {
           "EndNode": {
             "name": "Node3",
-            "id": 2
+            "index": 2
           }
         },
         {
           "EndNode": {
             "name": "Node4",
-            "id": 3
+            "index": 3
           }
         }
       ]
@@ -39,10 +39,10 @@
   },
   "graph": {
     "nodes": [
-      0,
-      1,
-      2,
-      3
+      "Node1",
+      "Node2",
+      "Node3",
+      "Node4"
     ],
     "node_holes": [],
     "edge_property": "undirected",
@@ -50,17 +50,17 @@
       [
         0,
         1,
-        100
+        900
       ],
       [
         1,
         2,
-        400
+        80
       ],
       [
         2,
         3,
-        900
+        50
       ]
     ]
   }
