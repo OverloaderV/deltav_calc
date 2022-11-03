@@ -1,13 +1,16 @@
-use std::ops::Index;
 use petgraph::graph::NodeIndex;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::ops::Index;
 
 /// The menu trees represent nodes in the delta-v map and the categories they are put into
 #[derive(Deserialize)]
 #[cfg_attr(test, derive(PartialEq, Debug, Serialize))]
 pub enum MenuTree {
     /// A node representing a category other nodes can be put into
-    MiddleNode { name: String, children: Vec<MenuTree> },
+    MiddleNode {
+        name: String,
+        children: Vec<MenuTree>,
+    },
 
     /// A node holding an index to be used in the graph
     EndNode { name: String, index: NodeIndex },
@@ -20,19 +23,14 @@ impl MenuTree {
             MenuTree::MiddleNode { .. } => {
                 panic!("MiddleNodes don't have indices");
             }
-            MenuTree::EndNode { index, .. } => {
-                index
-            }
+            MenuTree::EndNode { index, .. } => index,
         }
     }
 
     pub fn get_name(&self) -> &str {
         return match self {
-            MenuTree::MiddleNode { name, .. } |
-            MenuTree::EndNode { name, .. } => {
-                name
-            }
-        }
+            MenuTree::MiddleNode { name, .. } | MenuTree::EndNode { name, .. } => name,
+        };
     }
 
     pub fn search(&self, search_name: &str) -> Option<&MenuTree> {
@@ -55,7 +53,9 @@ impl MenuTree {
 
                     match result {
                         None => {}
-                        Some(_) => { return result; }
+                        Some(_) => {
+                            return result;
+                        }
                     }
                 }
 
@@ -75,21 +75,39 @@ impl Index<&str> for MenuTree {
 
 #[cfg(test)]
 pub mod tests {
-    use std::fs::File;
-    use std::io::BufReader;
-    use petgraph::graph::NodeIndex;
     use crate::MenuTree;
     use crate::MenuTree::{EndNode, MiddleNode};
+    use petgraph::graph::NodeIndex;
+    use std::fs::File;
+    use std::io::BufReader;
 
     pub fn get_test_tree() -> MenuTree {
-        MiddleNode { name: String::from("Category1"), children: vec![
-            MiddleNode { name: String::from("Category2"), children: vec![
-                EndNode { name: String::from("Node1"), index: NodeIndex::new(0) },
-                EndNode { name: String::from("Node2"), index: NodeIndex::new(1) }
-            ] },
-            EndNode { name: String::from("Node3"), index: NodeIndex::new(2) },
-            EndNode { name: String::from("Node4"), index: NodeIndex::new(3) }
-        ] }
+        MiddleNode {
+            name: String::from("Category1"),
+            children: vec![
+                MiddleNode {
+                    name: String::from("Category2"),
+                    children: vec![
+                        EndNode {
+                            name: String::from("Node1"),
+                            index: NodeIndex::new(0),
+                        },
+                        EndNode {
+                            name: String::from("Node2"),
+                            index: NodeIndex::new(1),
+                        },
+                    ],
+                },
+                EndNode {
+                    name: String::from("Node3"),
+                    index: NodeIndex::new(2),
+                },
+                EndNode {
+                    name: String::from("Node4"),
+                    index: NodeIndex::new(3),
+                },
+            ],
+        }
     }
 
     #[test]
@@ -119,7 +137,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected="MiddleNodes don't have indices")]
+    #[should_panic(expected = "MiddleNodes don't have indices")]
     fn test_get_index_panic() {
         get_test_tree().get_index();
     }
@@ -134,7 +152,7 @@ pub mod tests {
         let deserialized: MenuTree = serde_json::from_value(json.clone()).unwrap();
         assert_eq!(deserialized, get_test_tree());
     }
-    
+
     #[test]
     fn test_index() {
         let test_tree = get_test_tree();
@@ -148,7 +166,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected="No node with the given name")]
+    #[should_panic(expected = "No node with the given name")]
     fn test_index_panic() {
         let _ = &get_test_tree()["test"];
     }
