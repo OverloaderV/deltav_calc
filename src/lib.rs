@@ -1,12 +1,15 @@
 //! A crate to generate a graph of the popular delta-v maps used in the game Kerbal Space Program.
-//! It allows you to do opperations on an immutable [graph](https://docs.rs/petgraph/latest/petgraph/)
+//! It allows you to do operations on an immutable [graph](https://docs.rs/petgraph/latest/petgraph/)
 //! and get a tree representation of the graphs nodes to be used in menus
 
 mod menutree;
 
-use petgraph::graph::UnGraph;
-use serde::{Serialize, Deserialize};
 pub use crate::menutree::MenuTree;
+use crate::MenuTree::{EndNode, MiddleNode};
+use petgraph::graph::UnGraph;
+use serde::Deserialize;
+#[cfg(test)]
+use serde::Serialize;
 
 /// Represents a usable deltav map
 ///
@@ -85,7 +88,7 @@ pub use crate::menutree::MenuTree;
 #[cfg_attr(test, derive(Debug, Serialize))]
 pub struct DeltavMap {
     menu_tree: MenuTree,
-    graph: UnGraph<String, i32>
+    graph: UnGraph<String, i32>,
 }
 
 impl DeltavMap {
@@ -99,168 +102,834 @@ impl DeltavMap {
         &self.graph
     }
 
-    fn stock() -> DeltavMap {
-        let menu_tree = MiddleNode {name: "Kerbol System".to_owned(), children: vec![
-            MiddleNode {name: "Kerbin".to_owned(), children: vec![
-                EndNode {name: "Kerbin Landed".to_owned(), id: 0},
-                EndNode {name: "Low Kerbin Orbit (80km)".to_owned(), id: 1},
-                EndNode {name: "Keostationary Orbit (2863.33km)".to_owned(), id: 2},
-                EndNode {name: "Kerbin Intercept".to_owned(), id: 3},
-                MiddleNode {name: "Mun".to_owned(), children: vec![
-                    EndNode {name: "Mun Intercept".to_owned(), id: 4},
-                    EndNode {name: "Low Mun Orbit (14km)".to_owned(), id: 5},
-                    EndNode {name: "Mun Landed".to_owned(), id: 6}
-                ]},
-                MiddleNode {name: "Minmus".to_owned(), children: vec![
-                    EndNode {name: "Minmus Intercept".to_owned(), id: 7},
-                    EndNode {name: "Low Minmus Orbit (10km)".to_owned(), id: 8},
-                    EndNode {name: "Minmus Landed".to_owned(), id: 9}
-                ]}
-            ]},
-            EndNode {name: "Low Kerbol Transfer Orbit (610km - 13,600Mm)".to_owned(), id: 10},
-            EndNode {name: "Low Kerbol Orbit (610km)".to_owned(), id: 11},
-            EndNode {name: "Kerbol Surface".to_owned(), id: 12},
-            MiddleNode {name: "Moho".to_owned(), children: vec![
-                EndNode {name: "Moho Intercept".to_owned(), id: 13},
-                EndNode {name: "Low Moho Orbit (20km)".to_owned(), id: 14},
-                EndNode {name: "Moho Landed".to_owned(), id: 15},
-            ]},
-            MiddleNode {name: "Eve".to_owned(), children: vec![
-                EndNode {name: "Eve Intercept".to_owned(), id: 16},
-                EndNode {name: "Eve Capture (100km - 85 Mm)".to_owned(), id: 17},
-                EndNode {name: "Low Eve Orbit (100km)".to_owned(), id: 18},
-                EndNode {name: "Eve Landed".to_owned(), id: 19},
-                MiddleNode {name: "Gilly".to_owned(), children: vec![
-                    EndNode {name: "Gilly Intercept".to_owned(), id: 20},
-                    EndNode {name: "Low Gilly Orbit (10km)".to_owned(), id: 21},
-                    EndNode {name: "Gilly Landed".to_owned(), id: 22},
-                ]}
-            ]},
-            MiddleNode {name: "Duna".to_owned(), children: vec![
-                EndNode {name: "Duna Intercept".to_owned(), id: 23},
-                EndNode {name: "Duna Capture (60km - 48Mm)".to_owned(), id: 24},
-                EndNode {name: "Low Duna Orbit (60km)".to_owned(), id: 25},
-                EndNode {name: "Duna Landed".to_owned(), id: 26},
-                MiddleNode {name: "Ike".to_owned(), children: vec![
-                    EndNode {name: "Ike Intercept".to_owned(), id: 27},
-                    EndNode {name: "Low Ike Orbit (10km)".to_owned(), id: 28},
-                    EndNode {name: "Ike Landed".to_owned(), id: 29},
-                ]}
-            ]},
-            MiddleNode {name: "Dres".to_owned(), children: vec![
-                EndNode {name: "Dres Intercept".to_owned(), id: 30},
-                EndNode {name: "Low Dres Orbit (12km)".to_owned(), id: 31},
-                EndNode {name: "Dres Landed".to_owned(), id: 32},
-            ]}
-        ]};
+    /// Returns a DeltavMap for the stock system
+    ///
+    /// # Structure of the MenuTree:
+    /// ```plain
+    /// Kerbol System
+    /// ├── Kerbin
+    /// │   ├── Kerbin Surface
+    /// │   ├── Low Kerbin Orbit (80kmLow Mun Orbit (14km))
+    /// │   ├── Keostationary Orbit (2.868Mm)
+    /// │   ├── Kerbin Capture
+    /// │   ├── Mun
+    /// │   │   ├── Mun Intercept
+    /// │   │   ├── Low Mun Orbit (14km)
+    /// │   │   └── Mun Surface
+    /// │   └── Minmus
+    /// │       ├── Minmus Intercept
+    /// │       ├── Low Minmus Orbit (10km)
+    /// │       └── Minmus Surface
+    /// ├── Eve
+    /// │   ├── Eve Intercept
+    /// │   ├── Eve Capture (100km - 85Mm)
+    /// │   ├── Low Eve Orbit (100km)
+    /// │   ├── Eve Surface
+    /// │   └── Gilly
+    /// │       ├── Gilly Intercept
+    /// │       ├── Low Gilly Orbit (10km)
+    /// │       └── Gilly Surface
+    /// ├── Duna
+    /// │   ├── Duna Intercept
+    /// │   ├── Duna Capture (60km - 48Mm)
+    /// │   ├── Low Duna Orbit (60km)
+    /// │   ├── Duna Surface
+    /// │   └── Ike
+    /// │       ├── Ike Intercept
+    /// │       ├── Low Ike Orbit (10km)
+    /// │       └── Ike Surface
+    /// ├── Jool
+    /// │   ├── Jool Intercept
+    /// │   ├── Jool Capture (210km - 268Mm)
+    /// │   ├── Low Jool Orbit (210km)
+    /// │   ├── Jool Surface
+    /// │   ├── Pol
+    /// │   │   ├── Pol Intercept
+    /// │   │   ├── Low Pol Orbit (10km)
+    /// │   │   └── Pol Surface
+    /// │   ├── Bop
+    /// │   │   ├── Bop Intercept
+    /// │   │   ├── Low Bop Orbit (30km)
+    /// │   │   └── Bop Surface
+    /// │   ├── Tylo
+    /// │   │   ├── Tylo Intercept
+    /// │   │   ├── Low Tylo Orbit (10km)
+    /// │   │   └── Tylo Surface
+    /// │   ├── Vall
+    /// │   │   ├── Vall Intercept
+    /// │   │   ├── Low Vall Orbit (15km)
+    /// │   │   └── Vall Surface
+    /// │   └── Laythe
+    /// │       ├── Laythe Intercept
+    /// │       ├── Low Laythe Orbit (60km)
+    /// │       └── Laythe Surface
+    /// ├── Dres
+    /// │   ├── Dres Intercept
+    /// │   ├── Low Dres Orbit (12km)
+    /// │   └── Dres Surface
+    /// ├── Moho
+    /// │   ├── Moho Intercept
+    /// │   ├── Low Moho Orbit (20km)
+    /// │   └── Moho Surface
+    /// ├── Eeloo
+    /// │   ├── Eeloo Intercept
+    /// │   ├── Low Eeloo Orbit (10km)
+    /// │   └── Eeloo Surface
+    /// ├── Elliptical Kerbol Orbit (610km - 13,600Mm)
+    /// ├── Low Kerbol Orbit (610km)
+    /// └── Kerbol Surface
+    /// ```
+    pub fn get_stock() -> DeltavMap {
+        let mut graph: UnGraph<String, i32> = UnGraph::new_undirected();
 
-        let mut graph: UnGraph<usize, i32> = UnGraph::new_undirected();
-        let nodes = [
-            graph.add_node(0),
-            graph.add_node(1),
-            graph.add_node(2),
-            graph.add_node(3),
-            graph.add_node(4),
-            graph.add_node(5),
-            graph.add_node(6),
-            graph.add_node(7),
-            graph.add_node(8),
-            graph.add_node(9),
-            graph.add_node(10),
-            graph.add_node(11),
-            graph.add_node(12),
-            graph.add_node(13),
-            graph.add_node(14),
-            graph.add_node(15),
-            graph.add_node(16),
-            graph.add_node(17),
-            graph.add_node(18),
-            graph.add_node(19),
-            graph.add_node(20),
-            graph.add_node(21),
-            graph.add_node(22),
-            graph.add_node(23),
-            graph.add_node(24),
-            graph.add_node(25),
-            graph.add_node(26),
-            graph.add_node(27),
-            graph.add_node(28),
-            graph.add_node(29),
-            graph.add_node(30),
-            graph.add_node(31),
-        ];
+        let menu_tree = MiddleNode {
+            name: String::from("Kerbol System"),
+            children: vec![
+                // Kerbin
+                MiddleNode {
+                    name: String::from("Kerbin"),
+                    children: vec![
+                        // Surface
+                        EndNode {
+                            name: String::from("Kerbin Surface"),
+                            index: graph.add_node(String::from("Kerbin Surface")),
+                        },
+                        // Low Orbit
+                        EndNode {
+                            name: String::from("Low Kerbin Orbit (80km)"),
+                            index: graph.add_node(String::from("Low Kerbin Orbit (80km)")),
+                        },
+                        // Keostationary
+                        EndNode {
+                            name: String::from("Keostationary Orbit (2.868Mm)"),
+                            index: graph.add_node(String::from("Keostationary Orbit (2.868Mm)")),
+                        },
+                        // Capture
+                        EndNode {
+                            name: String::from("Kerbin Capture"),
+                            index: graph.add_node(String::from("Kerbin Capture")),
+                        },
+                        // Mun
+                        MiddleNode {
+                            name: String::from("Mun"),
+                            children: vec![
+                                // Intercept
+                                EndNode {
+                                    name: String::from("Mun Intercept"),
+                                    index: graph.add_node(String::from("Mun Intercept")),
+                                },
+                                // Low Orbit
+                                EndNode {
+                                    name: String::from("Low Mun Orbit (14km)"),
+                                    index: graph.add_node(String::from("Low Mun Orbit (14km)")),
+                                },
+                                // Surface
+                                EndNode {
+                                    name: String::from("Mun Surface"),
+                                    index: graph.add_node(String::from("Mun Surface")),
+                                },
+                            ],
+                        },
+                        // Minmus
+                        MiddleNode {
+                            name: String::from("Minmus"),
+                            children: vec![
+                                // Intercept
+                                EndNode {
+                                    name: String::from("Minmus Intercept"),
+                                    index: graph.add_node(String::from("Minmus Intercept")),
+                                },
+                                // Low Orbit
+                                EndNode {
+                                    name: String::from("Low Minmus Orbit (10km)"),
+                                    index: graph.add_node(String::from("Low Minmus Orbit (10km)")),
+                                },
+                                // Surface
+                                EndNode {
+                                    name: String::from("Minmus Surface"),
+                                    index: graph.add_node(String::from("Minmus Surface")),
+                                },
+                            ],
+                        },
+                    ],
+                },
+                // Eve
+                MiddleNode {
+                    name: String::from("Eve"),
+                    children: vec![
+                        // Intercept
+                        EndNode {
+                            name: String::from("Eve Intercept"),
+                            index: graph.add_node(String::from("Eve Intercept")),
+                        },
+                        // Capture
+                        EndNode {
+                            name: String::from("Eve Capture (100km - 85Mm)"),
+                            index: graph.add_node(String::from("Eve Capture (100km - 85Mm)")),
+                        },
+                        // Low Orbit
+                        EndNode {
+                            name: String::from("Low Eve Orbit (100km)"),
+                            index: graph.add_node(String::from("Low Eve Orbit (100km)")),
+                        },
+                        // Surface
+                        EndNode {
+                            name: String::from("Eve Surface"),
+                            index: graph.add_node(String::from("Eve Surface")),
+                        },
+                        // Gilly
+                        MiddleNode {
+                            name: String::from("Gilly"),
+                            children: vec![
+                                // Intercept
+                                EndNode {
+                                    name: String::from("Gilly Intercept"),
+                                    index: graph.add_node(String::from("Gilly Intercept")),
+                                },
+                                // Low Orbit
+                                EndNode {
+                                    name: String::from("Low Gilly Orbit (10km)"),
+                                    index: graph.add_node(String::from("Low Gilly Orbit (10km)")),
+                                },
+                                // Surface
+                                EndNode {
+                                    name: String::from("Gilly Surface"),
+                                    index: graph.add_node(String::from("Gilly Surface")),
+                                },
+                            ]
+                        }
+                    ],
+                },
+                // Duna
+                MiddleNode {
+                    name: String::from("Duna"),
+                    children: vec![
+                        // Intercept
+                        EndNode {
+                            name: String::from("Duna Intercept"),
+                            index: graph.add_node(String::from("Duna Intercept")),
+                        },
+                        // Capture
+                        EndNode {
+                            name: String::from("Duna Capture (60km - 48Mm)"),
+                            index: graph.add_node(String::from("Duna Capture (60km - 48Mm)")),
+                        },
+                        // Low Orbit
+                        EndNode {
+                            name: String::from("Low Duna Orbit (60km)"),
+                            index: graph.add_node(String::from("Low Duna Orbit (60km)")),
+                        },
+                        // Surface
+                        EndNode {
+                            name: String::from("Duna Surface"),
+                            index: graph.add_node(String::from("Duna Surface)")),
+                        },
+                        // Ike
+                        MiddleNode {
+                            name: String::from("Ike"),
+                            children: vec![
+                                // Intercept
+                                EndNode {
+                                    name: String::from("Ike Intercept"),
+                                    index: graph.add_node(String::from("Ike Intercept)")),
+                                },
+                                // Low Orbit
+                                EndNode {
+                                    name: String::from("Low Ike Orbit (10km)"),
+                                    index: graph.add_node(String::from("Low Ike Orbit (10km)")),
+                                },
+                                // Surface
+                                EndNode {
+                                    name: String::from("Ike Surface"),
+                                    index: graph.add_node(String::from("Ike Surface")),
+                                },
+                            ]
+                        }
+                    ]
+                },
+                // Jool
+                MiddleNode {
+                    name: String::from("Jool"),
+                    children: vec![
+                        // Intercept
+                        EndNode {
+                            name: String::from("Jool Intercept"),
+                            index: graph.add_node(String::from("Jool Intercept")),
+                        },
+                        // Capture
+                        EndNode {
+                            name: String::from("Jool Capture (210km - 268Mm)"),
+                            index: graph.add_node(String::from("Jool Capture (210km - 268Mm)")),
+                        },
+                        // Low Orbit
+                        EndNode {
+                            name: String::from("Low Jool Orbit (210km)"),
+                            index: graph.add_node(String::from("Low Jool Orbit (210km)"))
+                        },
+                        // Surface
+                        EndNode {
+                            name: String::from("Jool Surface"),
+                            index: graph.add_node(String::from("Jool Surface"))
+                        },
+                        // Pol
+                        MiddleNode {
+                            name: String::from("Pol"),
+                            children: vec![
+                                // Intercept
+                                EndNode {
+                                    name: String::from("Pol Intercept"),
+                                    index: graph.add_node(String::from("Pol Intercept"))
+                                },
+                                // Low Orbit
+                                EndNode {
+                                    name: String::from("Low Pol Orbit (10km)"),
+                                    index: graph.add_node(String::from("Low Pol Orbit (10km)"))
+                                },
+                                // Surface
+                                EndNode {
+                                    name: String::from("Pol Surface"),
+                                    index: graph.add_node(String::from("Pol Surface"))
+                                },
+                            ]
+                        },
+                        // Bop
+                        MiddleNode {
+                            name: String::from("Bop"),
+                            children: vec![
+                                // Intercept
+                                EndNode {
+                                    name: String::from("Bop Intercept"),
+                                    index: graph.add_node(String::from("Bop Intercept"))
+                                },
+                                // Low Orbit
+                                EndNode {
+                                    name: String::from("Low Bop Orbit (30km)"),
+                                    index: graph.add_node(String::from("Low Bop Orbit (30km)"))
+                                },
+                                // Surface
+                                EndNode {
+                                    name: String::from("Bop Surface"),
+                                    index: graph.add_node(String::from("Bop Surface"))
+                                },
+                            ]
+                        },
+                        // Tylo
+                        MiddleNode {
+                            name: String::from("Tylo"),
+                            children: vec![
+                                // Intercept
+                                EndNode {
+                                    name: String::from("Tylo Intercept"),
+                                    index: graph.add_node(String::from("Tylo Intercept"))
+                                },
+                                // Low Orbit
+                                EndNode {
+                                    name: String::from("Low Tylo Orbit (10km)"),
+                                    index: graph.add_node(String::from("Low Tylo Orbit (10km)"))
+                                },
+                                // Surface
+                                EndNode {
+                                    name: String::from("Tylo Surface"),
+                                    index: graph.add_node(String::from("Tylo Surface"))
+                                },
+                            ]
+                        },
+                        // Vall
+                        MiddleNode {
+                            name: String::from("Vall"),
+                            children: vec![
+                                // Intercept
+                                EndNode {
+                                    name: String::from("Vall Intercept"),
+                                    index: graph.add_node(String::from("Vall Intercept"))
+                                },
+                                // Low Orbit
+                                EndNode {
+                                    name: String::from("Low Vall Orbit (15km)"),
+                                    index: graph.add_node(String::from("Low Vall Orbit (15km)"))
+                                },
+                                // Surface
+                                EndNode {
+                                    name: String::from("Vall Surface"),
+                                    index: graph.add_node(String::from("Vall Surface"))
+                                },
+                            ]
+                        },
+                        // Laythe
+                        MiddleNode {
+                            name: String::from("Laythe"),
+                            children: vec![
+                                // Intercept
+                                EndNode {
+                                    name: String::from("Laythe Intercept"),
+                                    index: graph.add_node(String::from("Laythe Intercept"))
+                                },
+                                // Low Orbit
+                                EndNode {
+                                    name: String::from("Low Laythe Orbit (60km)"),
+                                    index: graph.add_node(String::from("Low Laythe Orbit (60km)"))
+                                },
+                                // Surface
+                                EndNode {
+                                    name: String::from("Laythe Surface"),
+                                    index: graph.add_node(String::from("Laythe Surface"))
+                                },
+                            ]
+                        }
+                    ]
+                },
+                // Dres
+                MiddleNode {
+                    name: String::from("Dres"),
+                    children: vec![
+                        // Intercept
+                        EndNode {
+                            name: String::from("Dres Intercept"),
+                            index: graph.add_node(String::from("Dres Intercept"))
+                        },
+                        // Low Orbit
+                        EndNode {
+                            name: String::from("Low Dres Orbit (12km)"),
+                            index: graph.add_node(String::from("Low Dres Orbit (12km)"))
+                        },
+                        // Surface
+                        EndNode {
+                            name: String::from("Dres Surface"),
+                            index: graph.add_node(String::from("Dres Surface"))
+                        }
+                    ]
+                },
+                // Moho
+                MiddleNode {
+                    name: String::from("Moho"),
+                    children: vec![
+                        // Intercept
+                        EndNode {
+                            name: String::from("Moho Intercept"),
+                            index: graph.add_node(String::from("Moho Intercept"))
+                        },
+                        // Low Orbit
+                        EndNode {
+                            name: String::from("Low Moho Orbit (20km)"),
+                            index: graph.add_node(String::from("Low Moho Orbit (20km)"))
+                        },
+                        // Surface
+                        EndNode {
+                            name: String::from("Moho Surface"),
+                            index: graph.add_node(String::from("Moho Surface"))
+                        }
+                    ]
+                },
+                // Eeloo
+                MiddleNode {
+                    name: String::from("Eeloo"),
+                    children: vec![
+                        // Intercept
+                        EndNode {
+                            name: String::from("Eeloo Intercept"),
+                            index: graph.add_node(String::from("Eeloo Intercept"))
+                        },
+                        // Low Orbit
+                        EndNode {
+                            name: String::from("Low Eeloo Orbit (10km)"),
+                            index: graph.add_node(String::from("Low Eeloo Orbit (10km)"))
+                        },
+                        // Surface
+                        EndNode {
+                            name: String::from("Eeloo Surface"),
+                            index: graph.add_node(String::from("Eeloo Surface"))
+                        }
+                    ]
+                },
+                // Elliptical Orbit
+                EndNode {
+                    name: String::from("Elliptical Kerbol Orbit (610km - 13,600Mm)"),
+                    index: graph.add_node(String::from("Elliptical Kerbol Orbit (610km - 13,600Mm)"))
+                },
+                // Low Orbit
+                EndNode {
+                    name: String::from("Low Kerbol Orbit (610km)"),
+                    index: graph.add_node(String::from("Low Kerbol Orbit (610km)"))
+                },
+                // Surface
+                EndNode {
+                    name: String::from("Kerbol Surface"),
+                    index: graph.add_node(String::from("Kerbol Surface"))
+                },
+            ],
+        };
 
-        graph.add_edge(nodes[0], nodes[1], 3400);
-        graph.add_edge(nodes[1], nodes[2], 1115);
-        graph.add_edge(nodes[2], nodes[3], 930);
-        graph.add_edge(nodes[1], nodes[4], 860);
-        graph.add_edge(nodes[4], nodes[5], 280);
-        graph.add_edge(nodes[5], nodes[6], 580);
-        graph.add_edge(nodes[1], nodes[7], 930);
-        graph.add_edge(nodes[7], nodes[8], 150);
-        graph.add_edge(nodes[8], nodes[9], 180);
-        graph.add_edge(nodes[3], nodes[10], 6000);
-        graph.add_edge(nodes[10], nodes[11], 13700);
-        graph.add_edge(nodes[11], nodes[12], 67000);
-        graph.add_edge(nodes[3], nodes[13], 760);
-        graph.add_edge(nodes[13], nodes[14], 2400);
-        graph.add_edge(nodes[14], nodes[15], 870);
-        graph.add_edge(nodes[16], nodes[17], 80);
-        graph.add_edge(nodes[17], nodes[18], 1300);
-        graph.add_edge(nodes[18], nodes[19], 8000);
-        graph.add_edge(nodes[16], nodes[20], 60);
-        graph.add_edge(nodes[20], nodes[21], 410);
-        graph.add_edge(nodes[21], nodes[22], 30);
-        graph.add_edge(nodes[3], nodes[23], 130);
-        graph.add_edge(nodes[23], nodes[24], 250);
-        graph.add_edge(nodes[24], nodes[25], 360);
-        graph.add_edge(nodes[25], nodes[26], 1450);
-        graph.add_edge(nodes[24], nodes[27], 30);
-        graph.add_edge(nodes[27], nodes[28], 150);
-        graph.add_edge(nodes[28], nodes[29], 150);
-        graph.add_edge(nodes[3], nodes[30], 610);
-        graph.add_edge(nodes[30], nodes[31], 1300);
+        // region Kerbol
+        // region Kerbin
+        graph.add_edge(
+            menu_tree["Kerbin Surface"].get_index().clone(),
+            menu_tree["Low Kerbin Orbit (80km)"].get_index().clone(),
+            3400,
+        );
+        graph.add_edge(
+            menu_tree["Low Kerbin Orbit (80km)"].get_index().clone(),
+            menu_tree["Keostationary Orbit (2.868Mm)"]
+                .get_index()
+                .clone(),
+            1115,
+        );
+        graph.add_edge(
+            menu_tree["Low Kerbin Orbit (80km)"].get_index().clone(),
+            menu_tree["Kerbin Capture"].get_index().clone(),
+            950,
+        );
+        // region Mun
+        graph.add_edge(
+            menu_tree["Low Kerbin Orbit (80km)"].get_index().clone(),
+            menu_tree["Mun Intercept"].get_index().clone(),
+            860,
+        );
+        graph.add_edge(
+            menu_tree["Mun Intercept"].get_index().clone(),
+            menu_tree["Low Mun Orbit (14km)"].get_index().clone(),
+            310,
+        );
+        graph.add_edge(
+            menu_tree["Low Mun Orbit (14km)"].get_index().clone(),
+            menu_tree["Mun Surface"].get_index().clone(),
+            580,
+        );
+        // endregion Mun
+        // region Minmus
+        graph.add_edge(
+            menu_tree["Low Kerbin Orbit (80km)"].get_index().clone(),
+            menu_tree["Minmus Intercept"].get_index().clone(),
+            930,
+        );
+        graph.add_edge(
+            menu_tree["Minmus Intercept"].get_index().clone(),
+            menu_tree["Low Minmus Orbit (10km)"].get_index().clone(),
+            160,
+        );
+        graph.add_edge(
+            menu_tree["Low Minmus Orbit (10km)"].get_index().clone(),
+            menu_tree["Minmus Surface"].get_index().clone(),
+            180,
+        );
+        // endregion Minmus
+        // endregion Kerbin
+        // region Eve
+        graph.add_edge(
+            menu_tree["Kerbin Capture"].get_index().clone(),
+            menu_tree["Eve Intercept"].get_index().clone(),
+            90,
+        );
+        graph.add_edge(
+            menu_tree["Eve Intercept"].get_index().clone(),
+            menu_tree["Eve Capture (100km - 85Mm)"].get_index().clone(),
+            80,
+        );
+        graph.add_edge(
+            menu_tree["Eve Capture (100km - 85Mm)"].get_index().clone(),
+            menu_tree["Low Eve Orbit (100km)"].get_index().clone(),
+            1350,
+        );
+        graph.add_edge(
+            menu_tree["Low Eve Orbit (100km)"].get_index().clone(),
+            menu_tree["Eve Surface"].get_index().clone(),
+            8000,
+        );
+        // region Gilly
+        graph.add_edge(
+            menu_tree["Eve Capture (100km - 85Mm)"].get_index().clone(),
+            menu_tree["Gilly Intercept"].get_index().clone(),
+            60,
+        );
+        graph.add_edge(
+            menu_tree["Gilly Intercept"].get_index().clone(),
+            menu_tree["Low Gilly Orbit (10km)"].get_index().clone(),
+            410,
+        );
+        graph.add_edge(
+            menu_tree["Low Gilly Orbit (10km)"].get_index().clone(),
+            menu_tree["Gilly Surface"].get_index().clone(),
+            30,
+        );
+        // endregion Gilly
+        // endregion Eve
+        // region Duna
+        graph.add_edge(
+            menu_tree["Kerbin Capture"].get_index().clone(),
+            menu_tree["Duna Intercept"].get_index().clone(),
+            130,
+        );
+        graph.add_edge(
+            menu_tree["Duna Intercept"].get_index().clone(),
+            menu_tree["Duna Capture (60km - 48Mm)"].get_index().clone(),
+            250,
+        );
+        graph.add_edge(
+            menu_tree["Duna Capture (60km - 48Mm)"].get_index().clone(),
+            menu_tree["Low Duna Orbit (60km)"].get_index().clone(),
+            360,
+        );
+        graph.add_edge(
+            menu_tree["Low Duna Orbit (60km)"].get_index().clone(),
+            menu_tree["Duna Surface"].get_index().clone(),
+            1450,
+        );
+        // region Ike
+        graph.add_edge(
+            menu_tree["Duna Capture (60km - 48Mm)"].get_index().clone(),
+            menu_tree["Ike Intercept"].get_index().clone(),
+            30,
+        );
+        graph.add_edge(
+            menu_tree["Ike Intercept"].get_index().clone(),
+            menu_tree["Low Ike Orbit (10km)"].get_index().clone(),
+            180,
+        );
+        graph.add_edge(
+            menu_tree["Low Ike Orbit (10km)"].get_index().clone(),
+            menu_tree["Ike Surface"].get_index().clone(),
+            390,
+        );
+        // endregion Ike
+        // endregion Duna
+        // region Jool
+        graph.add_edge(
+            menu_tree["Kerbin Capture"].get_index().clone(),
+            menu_tree["Jool Intercept"].get_index().clone(),
+            980,
+        );
+        graph.add_edge(
+            menu_tree["Jool Intercept"].get_index().clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            160,
+        );
+        graph.add_edge(
+            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Low Jool Orbit (210km)"].get_index().clone(),
+            2810,
+        );
+        graph.add_edge(
+            menu_tree["Low Jool Orbit (210km)"].get_index().clone(),
+            menu_tree["Jool Surface"].get_index().clone(),
+            14000,
+        );
+        // region Pol
+        graph.add_edge(
+            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Pol Intercept"].get_index().clone(),
+            160,
+        );
+        graph.add_edge(
+            menu_tree["Pol Intercept"].get_index().clone(),
+            menu_tree["Low Pol Orbit (10km)"].get_index().clone(),
+            820,
+        );
+        graph.add_edge(
+            menu_tree["Low Pol Orbit (10km)"].get_index().clone(),
+            menu_tree["Pol Surface"].get_index().clone(),
+            130,
+        );
+        // endregion Pol
+        // region Bop
+        graph.add_edge(
+            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Bop Intercept"].get_index().clone(),
+            220,
+        );
+        graph.add_edge(
+            menu_tree["Bop Intercept"].get_index().clone(),
+            menu_tree["Low Bop Orbit (30km)"].get_index().clone(),
+            900,
+        );
+        graph.add_edge(
+            menu_tree["Low Bop Orbit (30km)"].get_index().clone(),
+            menu_tree["Bop Surface"].get_index().clone(),
+            230,
+        );
+        // endregion Bop
+        // region Tylo
+        graph.add_edge(
+            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Tylo Intercept"].get_index().clone(),
+            400,
+        );
+        graph.add_edge(
+            menu_tree["Tylo Intercept"].get_index().clone(),
+            menu_tree["Low Tylo Orbit (10km)"].get_index().clone(),
+            1100,
+        );
+        graph.add_edge(
+            menu_tree["Low Tylo Orbit (10km)"].get_index().clone(),
+            menu_tree["Tylo Surface"].get_index().clone(),
+            2270,
+        );
+        // endregion Tylo
+        // region Vall
+        graph.add_edge(
+            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Vall Intercept"].get_index().clone(),
+            620,
+        );
+        graph.add_edge(
+            menu_tree["Vall Intercept"].get_index().clone(),
+            menu_tree["Low Vall Orbit (15km)"].get_index().clone(),
+            910,
+        );
+        graph.add_edge(
+            menu_tree["Low Vall Orbit (15km)"].get_index().clone(),
+            menu_tree["Vall Surface"].get_index().clone(),
+            860,
+        );
+        // endregion Vall
+        // region Laythe
+        graph.add_edge(
+            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Laythe Intercept"].get_index().clone(),
+            930,
+        );
+        graph.add_edge(
+            menu_tree["Laythe Intercept"].get_index().clone(),
+            menu_tree["Low Laythe Orbit (60km)"].get_index().clone(),
+            1070,
+        );
+        graph.add_edge(
+            menu_tree["Low Laythe Orbit (60km)"].get_index().clone(),
+            menu_tree["Laythe Surface"].get_index().clone(),
+            2900,
+        );
+        // endregion Vall
+        // endregion Jool
+        // region Dres
+        graph.add_edge(
+            menu_tree["Kerbin Capture"].get_index().clone(),
+            menu_tree["Dres Intercept"].get_index().clone(),
+            610,
+        );
+        graph.add_edge(
+            menu_tree["Dres Intercept"].get_index().clone(),
+            menu_tree["Low Dres Orbit (12km)"].get_index().clone(),
+            1290,
+        );
+        graph.add_edge(
+            menu_tree["Low Dres Orbit (12km)"].get_index().clone(),
+            menu_tree["Dres Surface"].get_index().clone(),
+            430,
+        );
+        // endregion Dres
+        // region Moho
+        graph.add_edge(
+            menu_tree["Kerbin Capture"].get_index().clone(),
+            menu_tree["Moho Intercept"].get_index().clone(),
+            760,
+        );
+        graph.add_edge(
+            menu_tree["Moho Intercept"].get_index().clone(),
+            menu_tree["Low Moho Orbit (20km)"].get_index().clone(),
+            2410,
+        );
+        graph.add_edge(
+            menu_tree["Low Moho Orbit (20km)"].get_index().clone(),
+            menu_tree["Moho Surface"].get_index().clone(),
+            870,
+        );
+        // endregion Moho
+        // region Eeloo
+        graph.add_edge(
+            menu_tree["Kerbin Capture"].get_index().clone(),
+            menu_tree["Eeloo Intercept"].get_index().clone(),
+            1140,
+        );
+        graph.add_edge(
+            menu_tree["Eeloo Intercept"].get_index().clone(),
+            menu_tree["Low Eeloo Orbit (10km)"].get_index().clone(),
+            1370,
+        );
+        graph.add_edge(
+            menu_tree["Low Eeloo Orbit (10km)"].get_index().clone(),
+            menu_tree["Eeloo Surface"].get_index().clone(),
+            620,
+        );
+        // endregion Moho
+        graph.add_edge(
+            menu_tree["Kerbin Capture"].get_index().clone(),
+            menu_tree["Elliptical Kerbol Orbit (610km - 13,600Mm)"].get_index().clone(),
+            6000
+        );
+        graph.add_edge(
+            menu_tree["Elliptical Kerbol Orbit (610km - 13,600Mm)"].get_index().clone(),
+            menu_tree["Low Kerbol Orbit (610km)"].get_index().clone(),
+            13700
+        );
+        graph.add_edge(
+            menu_tree["Low Kerbol Orbit (610km)"].get_index().clone(),
+            menu_tree["Kerbol Surface"].get_index().clone(),
+            67000
+        );
+        // endregion Kerbol
 
-        DeltavMap {menu_tree, graph}
+        DeltavMap { menu_tree, graph }
     }
 }
 
 #[cfg(test)]
 impl PartialEq for DeltavMap {
     fn eq(&self, other: &Self) -> bool {
-         self.menu_tree == other.menu_tree && format!("{:?}", self.graph) == format!("{:?}", other.graph)
+        self.menu_tree == other.menu_tree
+            && format!("{:?}", self.graph) == format!("{:?}", other.graph)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::fs::File;
-    use petgraph::graph::UnGraph;
     use crate::DeltavMap;
     use crate::MenuTree::{EndNode, MiddleNode};
-
+    use petgraph::graph::UnGraph;
+    use std::fs::File;
 
     fn get_test_map() -> DeltavMap {
         let mut graph: UnGraph<String, i32> = UnGraph::new_undirected();
 
-        let menu_tree = MiddleNode { name: "Category1".to_owned(), children: vec![
-            MiddleNode { name: "Category2".to_owned(), children: vec![
-                EndNode { name: String::from("Node1"), index: graph.add_node(String::from("Node1"))},
-                EndNode { name: String::from("Node2"), index: graph.add_node(String::from("Node2"))},
-            ] },
-            EndNode { name: String::from("Node3"), index: graph.add_node(String::from("Node3")) },
-            EndNode { name: String::from("Node4"), index: graph.add_node(String::from("Node4")) },
-        ] };
+        let menu_tree = MiddleNode {
+            name: "Category1".to_owned(),
+            children: vec![
+                MiddleNode {
+                    name: "Category2".to_owned(),
+                    children: vec![
+                        EndNode {
+                            name: String::from("Node1"),
+                            index: graph.add_node(String::from("Node1")),
+                        },
+                        EndNode {
+                            name: String::from("Node2"),
+                            index: graph.add_node(String::from("Node2")),
+                        },
+                    ],
+                },
+                EndNode {
+                    name: String::from("Node3"),
+                    index: graph.add_node(String::from("Node3")),
+                },
+                EndNode {
+                    name: String::from("Node4"),
+                    index: graph.add_node(String::from("Node4")),
+                },
+            ],
+        };
 
-        graph.add_edge(menu_tree["Node1"].get_index().clone(),
-                       menu_tree["Node2"].get_index().clone(),
-                       900);
-        graph.add_edge(menu_tree["Node2"].get_index().clone(),
-                       menu_tree["Node3"].get_index().clone(),
-                       80);
-        graph.add_edge(menu_tree["Node3"].get_index().clone(),
-                       menu_tree["Node4"].get_index().clone(),
-                       50);
+        graph.add_edge(
+            menu_tree["Node1"].get_index().clone(),
+            menu_tree["Node2"].get_index().clone(),
+            900,
+        );
+        graph.add_edge(
+            menu_tree["Node2"].get_index().clone(),
+            menu_tree["Node3"].get_index().clone(),
+            80,
+        );
+        graph.add_edge(
+            menu_tree["Node3"].get_index().clone(),
+            menu_tree["Node4"].get_index().clone(),
+            50,
+        );
 
         DeltavMap { menu_tree, graph }
     }
@@ -271,6 +940,15 @@ mod tests {
         let json: serde_json::Value = serde_json::from_reader(file).unwrap();
         let deltav_map: DeltavMap = serde_json::from_value(json).unwrap();
 
-        assert_eq!(deltav_map, get_test_map(), "The deserialized map doesn't equal the test map")
+        assert_eq!(
+            deltav_map,
+            get_test_map(),
+            "The deserialized map doesn't equal the test map"
+        )
+    }
+
+    #[test]
+    fn test_stock() {
+        let _ = DeltavMap::get_stock();
     }
 }
