@@ -6,7 +6,8 @@ edition = "2021"
 description = "A simple ui to calculate the deltav requirements"
 license = "BSD-3-Clause"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 deltav_calc = { path = "../deltav_calc_lib" }
+gtk = { version = "~0.5", package = "gtk4" }
+
