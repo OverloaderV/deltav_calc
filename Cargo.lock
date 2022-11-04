@@ -9,16 +9,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "deltav_calc_bin"
-version = "0.1.0"
-
-[[package]]
-name = "deltav_calc_lib"
+name = "deltav_calc"
 version = "0.1.0"
 dependencies = [
  "petgraph",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "deltav_calc_bin"
+version = "0.1.0"
+dependencies = [
+ "deltav_calc",
 ]
 
 [[package]]
