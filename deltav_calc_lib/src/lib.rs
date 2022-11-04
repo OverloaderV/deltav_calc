@@ -134,7 +134,7 @@ impl DeltavMap {
     /// Kerbol System
     /// ├── Kerbin
     /// │   ├── Kerbin Surface
-    /// │   ├── Low Kerbin Orbit (80kmLow Mun Orbit (14km))
+    /// │   ├── Low Kerbin Orbit (80km)
     /// │   ├── Keostationary Orbit (2.868Mm)
     /// │   ├── Kerbin Capture
     /// │   ├── Mun
