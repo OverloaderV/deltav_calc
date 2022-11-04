@@ -9,4 +9,6 @@ license = "BSD-3-Clause"
 [dependencies]
 petgraph = {version = "0.6.2", features = ["serde-1"] }
 serde = { version = "~1.0", features = ["derive"] }
+
+[dev-dependencies]
 serde_json = "~1.0"
