@@ -613,7 +613,7 @@ impl DeltavMap {
         graph.add_edge(
             menu_tree["Mun Intercept"].get_index().clone(),
             menu_tree["Low Mun Orbit (14km)"].get_index().clone(),
-            310,
+            280,
         );
         graph.add_edge(
             menu_tree["Low Mun Orbit (14km)"].get_index().clone(),
