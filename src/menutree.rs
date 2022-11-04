@@ -1,8 +1,30 @@
+use std::error::Error;
+use std::fmt::{Debug, Display, Formatter};
 use petgraph::graph::NodeIndex;
 use serde::Deserialize;
 #[cfg(test)]
 use serde::Serialize;
 use std::ops::Index;
+
+/// This error is raised when a node is searched that doesn't exist. It saves the nodes name
+#[derive(Debug)]
+pub struct NoSuchNodeError {
+    name: String
+}
+
+impl NoSuchNodeError {
+    pub fn get_cause_name(&self) -> &str {
+        &self.name
+    }
+}
+
+impl Display for NoSuchNodeError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "There is no node with the name \"{}\" in the tree", self.name)
+    }
+}
+
+impl Error for NoSuchNodeError {}
 
 /// The menu trees represent nodes in the delta-v map and the categories they are put into
 #[derive(Deserialize)]
@@ -20,7 +42,7 @@ pub enum MenuTree {
 
 impl MenuTree {
     /// Gets the id of the node. if it's a middle node it panics
-    pub fn get_index(&self) -> &NodeIndex {
+    pub(crate) fn get_index(&self) -> &NodeIndex {
         match self {
             MenuTree::MiddleNode { .. } => {
                 panic!("MiddleNodes don't have indices");
@@ -31,37 +53,38 @@ impl MenuTree {
 
     pub fn get_name(&self) -> &str {
         return match self {
-            MenuTree::MiddleNode { name, .. } | MenuTree::EndNode { name, .. } => name,
+            MenuTree::MiddleNode { name, .. } | MenuTree::EndNode { name, .. } => name.as_str(),
         };
     }
 
-    pub fn search(&self, search_name: &str) -> Option<&MenuTree> {
+    /// Searches for the node with the given name.
+    ///
+    /// If there is no node with that name, a [`NoSuchNodeError`] will be returned
+    pub fn search(&self, search_name: &str) -> Result<&MenuTree, NoSuchNodeError> {
         match self {
             MenuTree::EndNode { name, .. } => {
                 if name == search_name {
-                    Some(self)
+                    Ok(self)
                 } else {
-                    None
+                    Err(NoSuchNodeError {name: search_name.to_string()})
                 }
             }
 
             MenuTree::MiddleNode { name, children } => {
                 if name == search_name {
-                    return Some(self);
+                    return Ok(self);
                 }
 
                 for child in children {
                     let result = child.search(search_name);
 
                     match result {
-                        None => {}
-                        Some(_) => {
-                            return result;
-                        }
+                        Ok(_) => {return result}
+                        Err(_) => {}
                     }
                 }
 
-                None
+                Err(NoSuchNodeError {name: search_name.to_string()})
             }
         }
     }
@@ -71,7 +94,7 @@ impl Index<&str> for MenuTree {
     type Output = MenuTree;
 
     fn index(&self, index: &str) -> &Self::Output {
-        self.search(index).expect("No node with the given name")
+        return self.search(index).unwrap();
     }
 }
 
@@ -118,20 +141,20 @@ pub mod tests {
 
         let result = test_tree.search("Category2");
         match result {
-            None => {
-                panic!("The \"Category2\" node should be found");
+            Err(e) => {
+                panic!("{:?}", e)
             }
-            Some(result) => {
+            Ok(result) => {
                 assert_eq!(result.get_name(), "Category2");
             }
         }
 
         let result = test_tree.search("Node1");
         match result {
-            None => {
-                panic!("The \"Node1\" node should be found");
+            Err(e) => {
+                panic!("{:?}", e)
             }
-            Some(result) => {
+            Ok(result) => {
                 assert_eq!(result.get_name(), "Node1");
                 assert_eq!(result.get_index().index(), 0);
             }
