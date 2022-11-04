@@ -980,7 +980,7 @@ mod tests {
 
     #[test]
     fn test_deserialize() {
-        let file = File::open("res/test.json").unwrap();
+        let file = File::open("test_res/test.json").unwrap();
         let json: serde_json::Value = serde_json::from_reader(file).unwrap();
         let deltav_map: DeltavMap = serde_json::from_value(json).unwrap();
 

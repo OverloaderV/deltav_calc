@@ -172,7 +172,7 @@ pub mod tests {
 
     #[test]
     fn test_deserialize() {
-        let f = File::open("res/test.json").unwrap();
+        let f = File::open("test_res/test.json").unwrap();
         let f = BufReader::new(f);
         let json: serde_json::Value = serde_json::from_reader(f).unwrap();
         let json = json.get("menu_tree").unwrap();
