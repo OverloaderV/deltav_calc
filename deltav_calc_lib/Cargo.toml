@@ -1,5 +1,5 @@
 [package]
-name = "deltav"
+name = "deltav_calc_lib"
 version = "0.1.0"
 authors = ["Overloader<overloader@utanota.com>"]
 edition = "2021"
