@@ -94,7 +94,10 @@ impl Index<&str> for MenuTree {
     type Output = MenuTree;
 
     fn index(&self, index: &str) -> &Self::Output {
-        return self.search(index).unwrap();
+        match self.search(index) {
+            Ok(result) => {result}
+            Err(e) => {panic!("{e}")}
+        }
     }
 }
 
@@ -142,7 +145,7 @@ pub mod tests {
         let result = test_tree.search("Category2");
         match result {
             Err(e) => {
-                panic!("{:?}", e)
+                panic!("{}", e)
             }
             Ok(result) => {
                 assert_eq!(result.get_name(), "Category2");
@@ -152,7 +155,7 @@ pub mod tests {
         let result = test_tree.search("Node1");
         match result {
             Err(e) => {
-                panic!("{:?}", e)
+                panic!("{}", e)
             }
             Ok(result) => {
                 assert_eq!(result.get_name(), "Node1");
@@ -191,7 +194,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "No node with the given name")]
+    #[should_panic(expected = "There is no node with the name \"test\" in the tree")]
     fn test_index_panic() {
         let _ = &get_test_tree()["test"];
     }

@@ -2,11 +2,14 @@
 //! It allows you to do operations on an immutable [graph](https://docs.rs/petgraph/latest/petgraph/)
 //! and get a tree representation of the graphs nodes to be used in menus
 
+extern crate core;
+
 mod menutree;
 
-pub use crate::menutree::MenuTree;
+pub use crate::menutree::{MenuTree, NoSuchNodeError};
 use crate::MenuTree::{EndNode, MiddleNode};
-use petgraph::graph::UnGraph;
+use petgraph::graph::{NodeIndex, UnGraph};
+use petgraph::algo;
 use serde::Deserialize;
 #[cfg(test)]
 use serde::Serialize;
@@ -97,9 +100,31 @@ impl DeltavMap {
         &self.menu_tree
     }
 
-    /// The graph you can use to calculate deltav costs. It's a graph from the [petgraph](https://docs.rs/petgraph/latest/petgraph/) crate
-    pub fn get_graph(&self) -> &UnGraph<String, i32> {
-        &self.graph
+    /// Calculates the deltav required to get from the start to the end
+    ///
+    /// Returns a [`NoSuchNodeError`] If either start or end aren't valid nodes
+    /// Returns `None` if there is no path between nodes. If this happens, the map is probably malformed
+    pub fn calculate_delta_v(&self, start: &str, end: &str) -> Result<Option<i32>, NoSuchNodeError> {
+        match self.menu_tree.search(start) {
+            Err(e) => {
+                Err(e)
+            }
+            Ok(start) => {
+                return match self.menu_tree.search(end) {
+                    Err(e) => {
+                        Err(e)
+                    }
+                    Ok(end) => {
+                        let result: Option<(i32, Vec<NodeIndex>)> = algo::astar(&self.graph, start.get_index().clone(), |finish| finish == end.get_index().clone(), |e| *e.weight(), |_| 0);
+
+                        match result {
+                            None => { Ok(None) }
+                            Some(result) => { Ok(Some(result.0)) }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// Returns a DeltavMap for the stock system
@@ -296,8 +321,8 @@ impl DeltavMap {
                                     name: String::from("Gilly Surface"),
                                     index: graph.add_node(String::from("Gilly Surface")),
                                 },
-                            ]
-                        }
+                            ],
+                        },
                     ],
                 },
                 // Duna
@@ -343,9 +368,9 @@ impl DeltavMap {
                                     name: String::from("Ike Surface"),
                                     index: graph.add_node(String::from("Ike Surface")),
                                 },
-                            ]
-                        }
-                    ]
+                            ],
+                        },
+                    ],
                 },
                 // Jool
                 MiddleNode {
@@ -364,12 +389,12 @@ impl DeltavMap {
                         // Low Orbit
                         EndNode {
                             name: String::from("Low Jool Orbit (210km)"),
-                            index: graph.add_node(String::from("Low Jool Orbit (210km)"))
+                            index: graph.add_node(String::from("Low Jool Orbit (210km)")),
                         },
                         // Surface
                         EndNode {
                             name: String::from("Jool Surface"),
-                            index: graph.add_node(String::from("Jool Surface"))
+                            index: graph.add_node(String::from("Jool Surface")),
                         },
                         // Pol
                         MiddleNode {
@@ -378,19 +403,19 @@ impl DeltavMap {
                                 // Intercept
                                 EndNode {
                                     name: String::from("Pol Intercept"),
-                                    index: graph.add_node(String::from("Pol Intercept"))
+                                    index: graph.add_node(String::from("Pol Intercept")),
                                 },
                                 // Low Orbit
                                 EndNode {
                                     name: String::from("Low Pol Orbit (10km)"),
-                                    index: graph.add_node(String::from("Low Pol Orbit (10km)"))
+                                    index: graph.add_node(String::from("Low Pol Orbit (10km)")),
                                 },
                                 // Surface
                                 EndNode {
                                     name: String::from("Pol Surface"),
-                                    index: graph.add_node(String::from("Pol Surface"))
+                                    index: graph.add_node(String::from("Pol Surface")),
                                 },
-                            ]
+                            ],
                         },
                         // Bop
                         MiddleNode {
@@ -399,19 +424,19 @@ impl DeltavMap {
                                 // Intercept
                                 EndNode {
                                     name: String::from("Bop Intercept"),
-                                    index: graph.add_node(String::from("Bop Intercept"))
+                                    index: graph.add_node(String::from("Bop Intercept")),
                                 },
                                 // Low Orbit
                                 EndNode {
                                     name: String::from("Low Bop Orbit (30km)"),
-                                    index: graph.add_node(String::from("Low Bop Orbit (30km)"))
+                                    index: graph.add_node(String::from("Low Bop Orbit (30km)")),
                                 },
                                 // Surface
                                 EndNode {
                                     name: String::from("Bop Surface"),
-                                    index: graph.add_node(String::from("Bop Surface"))
+                                    index: graph.add_node(String::from("Bop Surface")),
                                 },
-                            ]
+                            ],
                         },
                         // Tylo
                         MiddleNode {
@@ -420,19 +445,19 @@ impl DeltavMap {
                                 // Intercept
                                 EndNode {
                                     name: String::from("Tylo Intercept"),
-                                    index: graph.add_node(String::from("Tylo Intercept"))
+                                    index: graph.add_node(String::from("Tylo Intercept")),
                                 },
                                 // Low Orbit
                                 EndNode {
                                     name: String::from("Low Tylo Orbit (10km)"),
-                                    index: graph.add_node(String::from("Low Tylo Orbit (10km)"))
+                                    index: graph.add_node(String::from("Low Tylo Orbit (10km)")),
                                 },
                                 // Surface
                                 EndNode {
                                     name: String::from("Tylo Surface"),
-                                    index: graph.add_node(String::from("Tylo Surface"))
+                                    index: graph.add_node(String::from("Tylo Surface")),
                                 },
-                            ]
+                            ],
                         },
                         // Vall
                         MiddleNode {
@@ -441,19 +466,19 @@ impl DeltavMap {
                                 // Intercept
                                 EndNode {
                                     name: String::from("Vall Intercept"),
-                                    index: graph.add_node(String::from("Vall Intercept"))
+                                    index: graph.add_node(String::from("Vall Intercept")),
                                 },
                                 // Low Orbit
                                 EndNode {
                                     name: String::from("Low Vall Orbit (15km)"),
-                                    index: graph.add_node(String::from("Low Vall Orbit (15km)"))
+                                    index: graph.add_node(String::from("Low Vall Orbit (15km)")),
                                 },
                                 // Surface
                                 EndNode {
                                     name: String::from("Vall Surface"),
-                                    index: graph.add_node(String::from("Vall Surface"))
+                                    index: graph.add_node(String::from("Vall Surface")),
                                 },
-                            ]
+                            ],
                         },
                         // Laythe
                         MiddleNode {
@@ -462,21 +487,21 @@ impl DeltavMap {
                                 // Intercept
                                 EndNode {
                                     name: String::from("Laythe Intercept"),
-                                    index: graph.add_node(String::from("Laythe Intercept"))
+                                    index: graph.add_node(String::from("Laythe Intercept")),
                                 },
                                 // Low Orbit
                                 EndNode {
                                     name: String::from("Low Laythe Orbit (60km)"),
-                                    index: graph.add_node(String::from("Low Laythe Orbit (60km)"))
+                                    index: graph.add_node(String::from("Low Laythe Orbit (60km)")),
                                 },
                                 // Surface
                                 EndNode {
                                     name: String::from("Laythe Surface"),
-                                    index: graph.add_node(String::from("Laythe Surface"))
+                                    index: graph.add_node(String::from("Laythe Surface")),
                                 },
-                            ]
-                        }
-                    ]
+                            ],
+                        },
+                    ],
                 },
                 // Dres
                 MiddleNode {
@@ -485,19 +510,19 @@ impl DeltavMap {
                         // Intercept
                         EndNode {
                             name: String::from("Dres Intercept"),
-                            index: graph.add_node(String::from("Dres Intercept"))
+                            index: graph.add_node(String::from("Dres Intercept")),
                         },
                         // Low Orbit
                         EndNode {
                             name: String::from("Low Dres Orbit (12km)"),
-                            index: graph.add_node(String::from("Low Dres Orbit (12km)"))
+                            index: graph.add_node(String::from("Low Dres Orbit (12km)")),
                         },
                         // Surface
                         EndNode {
                             name: String::from("Dres Surface"),
-                            index: graph.add_node(String::from("Dres Surface"))
-                        }
-                    ]
+                            index: graph.add_node(String::from("Dres Surface")),
+                        },
+                    ],
                 },
                 // Moho
                 MiddleNode {
@@ -506,19 +531,19 @@ impl DeltavMap {
                         // Intercept
                         EndNode {
                             name: String::from("Moho Intercept"),
-                            index: graph.add_node(String::from("Moho Intercept"))
+                            index: graph.add_node(String::from("Moho Intercept")),
                         },
                         // Low Orbit
                         EndNode {
                             name: String::from("Low Moho Orbit (20km)"),
-                            index: graph.add_node(String::from("Low Moho Orbit (20km)"))
+                            index: graph.add_node(String::from("Low Moho Orbit (20km)")),
                         },
                         // Surface
                         EndNode {
                             name: String::from("Moho Surface"),
-                            index: graph.add_node(String::from("Moho Surface"))
-                        }
-                    ]
+                            index: graph.add_node(String::from("Moho Surface")),
+                        },
+                    ],
                 },
                 // Eeloo
                 MiddleNode {
@@ -527,34 +552,35 @@ impl DeltavMap {
                         // Intercept
                         EndNode {
                             name: String::from("Eeloo Intercept"),
-                            index: graph.add_node(String::from("Eeloo Intercept"))
+                            index: graph.add_node(String::from("Eeloo Intercept")),
                         },
                         // Low Orbit
                         EndNode {
                             name: String::from("Low Eeloo Orbit (10km)"),
-                            index: graph.add_node(String::from("Low Eeloo Orbit (10km)"))
+                            index: graph.add_node(String::from("Low Eeloo Orbit (10km)")),
                         },
                         // Surface
                         EndNode {
                             name: String::from("Eeloo Surface"),
-                            index: graph.add_node(String::from("Eeloo Surface"))
-                        }
-                    ]
+                            index: graph.add_node(String::from("Eeloo Surface")),
+                        },
+                    ],
                 },
                 // Elliptical Orbit
                 EndNode {
                     name: String::from("Elliptical Kerbol Orbit (610km - 13,600Mm)"),
-                    index: graph.add_node(String::from("Elliptical Kerbol Orbit (610km - 13,600Mm)"))
+                    index: graph
+                        .add_node(String::from("Elliptical Kerbol Orbit (610km - 13,600Mm)")),
                 },
                 // Low Orbit
                 EndNode {
                     name: String::from("Low Kerbol Orbit (610km)"),
-                    index: graph.add_node(String::from("Low Kerbol Orbit (610km)"))
+                    index: graph.add_node(String::from("Low Kerbol Orbit (610km)")),
                 },
                 // Surface
                 EndNode {
                     name: String::from("Kerbol Surface"),
-                    index: graph.add_node(String::from("Kerbol Surface"))
+                    index: graph.add_node(String::from("Kerbol Surface")),
                 },
             ],
         };
@@ -699,11 +725,15 @@ impl DeltavMap {
         );
         graph.add_edge(
             menu_tree["Jool Intercept"].get_index().clone(),
-            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"]
+                .get_index()
+                .clone(),
             160,
         );
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"]
+                .get_index()
+                .clone(),
             menu_tree["Low Jool Orbit (210km)"].get_index().clone(),
             2810,
         );
@@ -714,7 +744,9 @@ impl DeltavMap {
         );
         // region Pol
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"]
+                .get_index()
+                .clone(),
             menu_tree["Pol Intercept"].get_index().clone(),
             160,
         );
@@ -731,7 +763,9 @@ impl DeltavMap {
         // endregion Pol
         // region Bop
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"]
+                .get_index()
+                .clone(),
             menu_tree["Bop Intercept"].get_index().clone(),
             220,
         );
@@ -748,7 +782,9 @@ impl DeltavMap {
         // endregion Bop
         // region Tylo
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"]
+                .get_index()
+                .clone(),
             menu_tree["Tylo Intercept"].get_index().clone(),
             400,
         );
@@ -765,7 +801,9 @@ impl DeltavMap {
         // endregion Tylo
         // region Vall
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"]
+                .get_index()
+                .clone(),
             menu_tree["Vall Intercept"].get_index().clone(),
             620,
         );
@@ -782,7 +820,9 @@ impl DeltavMap {
         // endregion Vall
         // region Laythe
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"].get_index().clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"]
+                .get_index()
+                .clone(),
             menu_tree["Laythe Intercept"].get_index().clone(),
             930,
         );
@@ -851,18 +891,22 @@ impl DeltavMap {
         // endregion Moho
         graph.add_edge(
             menu_tree["Kerbin Capture"].get_index().clone(),
-            menu_tree["Elliptical Kerbol Orbit (610km - 13,600Mm)"].get_index().clone(),
-            6000
+            menu_tree["Elliptical Kerbol Orbit (610km - 13,600Mm)"]
+                .get_index()
+                .clone(),
+            6000,
         );
         graph.add_edge(
-            menu_tree["Elliptical Kerbol Orbit (610km - 13,600Mm)"].get_index().clone(),
+            menu_tree["Elliptical Kerbol Orbit (610km - 13,600Mm)"]
+                .get_index()
+                .clone(),
             menu_tree["Low Kerbol Orbit (610km)"].get_index().clone(),
-            13700
+            13700,
         );
         graph.add_edge(
             menu_tree["Low Kerbol Orbit (610km)"].get_index().clone(),
             menu_tree["Kerbol Surface"].get_index().clone(),
-            67000
+            67000,
         );
         // endregion Kerbol
 
@@ -950,5 +994,13 @@ mod tests {
     #[test]
     fn test_stock() {
         let _ = DeltavMap::get_stock();
+    }
+
+    #[test]
+    fn calculate_cost() {
+        let test_map = get_test_map();
+        let cost = test_map.calculate_delta_v("Node1", "Node4").unwrap().unwrap();
+
+        assert_eq!(cost, 1030);
     }
 }
