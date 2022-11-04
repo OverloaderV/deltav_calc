@@ -1,5 +1,7 @@
 use petgraph::graph::NodeIndex;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+#[cfg(test)]
+use serde::Serialize;
 use std::ops::Index;
 
 /// The menu trees represent nodes in the delta-v map and the categories they are put into
