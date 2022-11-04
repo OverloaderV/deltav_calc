@@ -1,12 +1,6 @@
-[package]
-name = "deltav"
-version = "0.1.0"
-authors = ["Overloader<overloader@utanota.com>"]
-edition = "2021"
-description = "Allows you to generate a graph representing a delta'v map used in the game Kerbal Space Program."
-license = "BSD-3-Clause"
+[workspace]
 
-[dependencies]
-petgraph = {version = "0.6.2", features = ["serde-1"] }
-serde = { version = "~1.0", features = ["derive"] }
-serde_json = "~1.0"
+members = [
+  "deltav_calc_bin",
+  "deltav_calc_lib"
+]
