@@ -1,5 +1,5 @@
 use std::sync::{Arc, Mutex};
-use gtk::{Application, ApplicationWindow, Box, Button, Expander, Label, Orientation, Widget, Window};
+use gtk::{Application, ApplicationWindow, Box, Button, Expander, Inhibit, Label, Orientation, Widget, Window};
 use gtk::prelude::*;
 use deltav_calc::{DeltavMap, MenuTree};
 
@@ -33,31 +33,35 @@ fn build_ui(app: &Application) {
         .build());
 
     // THe button to click when you want to set te start node
-    let origin_button = Button::builder()
+    let origin_button = Arc::new(Button::builder()
         .label("Click here to select the start")
-        .build();
-    // When clicked open the selection window
-    let sel_clone = sel.clone();
-    let select_window_clone = select_window.clone();
-    origin_button.connect_clicked(move |_| {
-        let mut sel = sel_clone.lock().unwrap();
-        *sel = Selection::ORIGIN;
-        drop(sel);
-        show_selection(&select_window_clone);
-    });
+        .build());
 
     // THe button to click when you want to set te end node
-    let target_button = Button::builder()
+    let target_button = Arc::new(Button::builder()
         .label("Click here to select the end")
-        .build();
+        .build());
     // When clicked open the selection window
     let sel_clone = sel.clone();
     let select_window_clone = select_window.clone();
+    let origin_button_clone = origin_button.clone();
+    let target_button_clone = target_button.clone();
     target_button.connect_clicked(move |_| {
         let mut sel = sel_clone.lock().unwrap();
         *sel = Selection::TARGET;
         drop(sel);
-        show_selection(&select_window_clone);
+        show_selection(&select_window_clone, &origin_button_clone, &target_button_clone);
+    });
+    // When origin button is clicked open the selection window
+    let sel_clone = sel.clone();
+    let select_window_clone = select_window.clone();
+    let origin_button_clone = origin_button.clone();
+    let target_button_clone = target_button.clone();
+    origin_button.connect_clicked(move |_| {
+        let mut sel = sel_clone.lock().unwrap();
+        *sel = Selection::ORIGIN;
+        drop(sel);
+        show_selection(&select_window_clone, &origin_button_clone, &target_button_clone);
     });
 
     let result_label = Label::new(None);
@@ -67,25 +71,34 @@ fn build_ui(app: &Application) {
     let layout = Box::builder()
         .orientation(Orientation::Horizontal)
         .build();
-    layout.append(&origin_button);
+    layout.append(&*origin_button);
     layout.append(&result_label);
-    layout.append(&target_button);
+    layout.append(&*target_button);
 
     let sel_clone = sel.clone();
     let map_clone = map.clone();
     let select_window_clone = select_window.clone();
+    let origin_button_clone = origin_button.clone();
+    let target_button_clone = target_button.clone();
     let selection_tree = build_tree(
         map.get_menu_tree(),
         Arc::new(move |button: &Button| {
             selected(button.label().unwrap().as_str(),
                      &sel_clone,
-                     &origin_button,
-                     &target_button,
+                     &*origin_button_clone,
+                     &*target_button_clone,
                      &result_label,
                      &map_clone,
                      &select_window_clone);
         }));
     select_window.set_child(Some(&selection_tree));
+
+    let origin_button_clone = origin_button.clone();
+    let target_button_clone = target_button.clone();
+    select_window.connect_close_request(move |window| {
+        close_selection(window, &origin_button_clone, &target_button_clone);
+        Inhibit(true)
+    });
 
     // Build the final window
     let window = ApplicationWindow::builder()
@@ -98,7 +111,9 @@ fn build_ui(app: &Application) {
 }
 
 // Gets called when a node should be selected
-fn show_selection(select_window: &Arc<Window>) {
+fn show_selection(select_window: &Arc<Window>, start_button: &Arc<Button>, end_button: &Arc<Button>) {
+    start_button.set_sensitive(false);
+    end_button.set_sensitive(false);
     select_window.show();
 }
 
@@ -174,5 +189,12 @@ fn selected(selection: &str, to_change: &Arc<Mutex<Selection>>, start: &Button, 
         }
     }
     set_result(result, map, start.label().unwrap().as_str(), end.label().unwrap().as_str());
+    close_selection(&*select_window, start, end);
+}
+
+// Closes the selection window and activates the buttons
+fn close_selection(select_window: &Window, start_button: &Button, end_button: &Button) {
     select_window.hide();
+    start_button.set_sensitive(true);
+    end_button.set_sensitive(true);
 }
