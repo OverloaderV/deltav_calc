@@ -1,6 +1,13 @@
 //! A crate to generate a graph of the popular delta-v maps used in the game Kerbal Space Program.
-//! It allows you to do operations on an immutable [graph](https://docs.rs/petgraph/latest/petgraph/)
-//! and get a tree representation of the graphs nodes to be used in menus
+//! It allows you to calculate the deltav to get from one point
+//!
+//! # Example
+//! ```
+//! use deltav_calc::DeltavMap;
+//!
+//! let stock_map = DeltavMap::new_stock();
+//! let deltav = stock_map.calculate_delta_v("Kerbin Surface", "Mun Surface");
+//! ```
 
 extern crate core;
 
@@ -14,6 +21,14 @@ use serde::Deserialize;
 use serde::Serialize;
 
 /// Represents a usable deltav map
+///
+/// # Example
+/// ```
+/// use deltav_calc::DeltavMap;
+///
+/// let stock_map = DeltavMap::new_stock();
+/// let deltav = stock_map.calculate_delta_v("Kerbin Surface", "Mun Surface");
+/// ```
 ///
 /// # Deserialization
 /// A DeltavMap can be deserialized from a JSON file like this:
