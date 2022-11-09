@@ -22,7 +22,7 @@ enum Selection {
 // Builds the ui
 fn build_ui(app: &Application) {
     // The deltav map to use
-    let map = Arc::new(DeltavMap::get_stock());
+    let map = Arc::new(DeltavMap::stock());
 
     // Defines if the origin or the target should be selected
     let sel = Arc::new(Mutex::new(Selection::ORIGIN));
@@ -91,8 +91,8 @@ fn build_ui(app: &Application) {
     let selection_tree = ScrolledWindow::builder()
         .width_request(100)
         .child(&build_tree(
-        map.get_menu_tree(),
-        Arc::new(move |button: &Button| {
+            map.menu_tree(),
+            Arc::new(move |button: &Button| {
             selected(button.label().unwrap().as_str(),
                      &sel_clone,
                      &*origin_button_clone,
@@ -134,7 +134,7 @@ fn show_selection(select_window: &Arc<Window>, start_button: &Arc<Button>, end_b
 fn set_result(result_label: &Label, map: &DeltavMap, start: &str, end: &str) {
     match map.calculate_delta_v(start, end) {
         Err(e) => {
-            if e.get_cause_name() == start {
+            if e.cause_name() == start {
                 result_label.set_label("The start node hasn't been selected yet");
             } else {
                 result_label.set_label("The end node hasn't been selected yet");

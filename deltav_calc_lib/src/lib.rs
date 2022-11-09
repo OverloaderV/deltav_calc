@@ -96,7 +96,7 @@ pub struct DeltavMap {
 
 impl DeltavMap {
     /// The menu tree you can use to structure your menu
-    pub fn get_menu_tree(&self) -> &MenuTree {
+    pub fn menu_tree(&self) -> &MenuTree {
         &self.menu_tree
     }
 
@@ -115,7 +115,7 @@ impl DeltavMap {
                         Err(e)
                     }
                     Ok(end) => {
-                        let result: Option<(i32, Vec<NodeIndex>)> = algo::astar(&self.graph, start.get_index().clone(), |finish| finish == end.get_index().clone(), |e| *e.weight(), |_| 0);
+                        let result: Option<(i32, Vec<NodeIndex>)> = algo::astar(&self.graph, start.index().clone(), |finish| finish == end.index().clone(), |e| *e.weight(), |_| 0);
 
                         match result {
                             None => { Ok(None) }
@@ -204,7 +204,7 @@ impl DeltavMap {
     /// ├── Low Kerbol Orbit (610km)
     /// └── Kerbol Surface
     /// ```
-    pub fn get_stock() -> DeltavMap {
+    pub fn stock() -> DeltavMap {
         let mut graph: UnGraph<String, i32> = UnGraph::new_undirected();
 
         let menu_tree = MiddleNode {
@@ -588,324 +588,324 @@ impl DeltavMap {
         // region Kerbol
         // region Kerbin
         graph.add_edge(
-            menu_tree["Kerbin Surface"].get_index().clone(),
-            menu_tree["Low Kerbin Orbit (80km)"].get_index().clone(),
+            menu_tree["Kerbin Surface"].index().clone(),
+            menu_tree["Low Kerbin Orbit (80km)"].index().clone(),
             3400,
         );
         graph.add_edge(
-            menu_tree["Low Kerbin Orbit (80km)"].get_index().clone(),
+            menu_tree["Low Kerbin Orbit (80km)"].index().clone(),
             menu_tree["Keostationary Orbit (2.868Mm)"]
-                .get_index()
+                .index()
                 .clone(),
             1115,
         );
         graph.add_edge(
-            menu_tree["Low Kerbin Orbit (80km)"].get_index().clone(),
-            menu_tree["Kerbin Capture"].get_index().clone(),
+            menu_tree["Low Kerbin Orbit (80km)"].index().clone(),
+            menu_tree["Kerbin Capture"].index().clone(),
             950,
         );
         // region Mun
         graph.add_edge(
-            menu_tree["Low Kerbin Orbit (80km)"].get_index().clone(),
-            menu_tree["Mun Intercept"].get_index().clone(),
+            menu_tree["Low Kerbin Orbit (80km)"].index().clone(),
+            menu_tree["Mun Intercept"].index().clone(),
             860,
         );
         graph.add_edge(
-            menu_tree["Mun Intercept"].get_index().clone(),
-            menu_tree["Low Mun Orbit (14km)"].get_index().clone(),
+            menu_tree["Mun Intercept"].index().clone(),
+            menu_tree["Low Mun Orbit (14km)"].index().clone(),
             280,
         );
         graph.add_edge(
-            menu_tree["Low Mun Orbit (14km)"].get_index().clone(),
-            menu_tree["Mun Surface"].get_index().clone(),
+            menu_tree["Low Mun Orbit (14km)"].index().clone(),
+            menu_tree["Mun Surface"].index().clone(),
             580,
         );
         // endregion Mun
         // region Minmus
         graph.add_edge(
-            menu_tree["Low Kerbin Orbit (80km)"].get_index().clone(),
-            menu_tree["Minmus Intercept"].get_index().clone(),
+            menu_tree["Low Kerbin Orbit (80km)"].index().clone(),
+            menu_tree["Minmus Intercept"].index().clone(),
             930,
         );
         graph.add_edge(
-            menu_tree["Minmus Intercept"].get_index().clone(),
-            menu_tree["Low Minmus Orbit (10km)"].get_index().clone(),
+            menu_tree["Minmus Intercept"].index().clone(),
+            menu_tree["Low Minmus Orbit (10km)"].index().clone(),
             160,
         );
         graph.add_edge(
-            menu_tree["Low Minmus Orbit (10km)"].get_index().clone(),
-            menu_tree["Minmus Surface"].get_index().clone(),
+            menu_tree["Low Minmus Orbit (10km)"].index().clone(),
+            menu_tree["Minmus Surface"].index().clone(),
             180,
         );
         // endregion Minmus
         // endregion Kerbin
         // region Eve
         graph.add_edge(
-            menu_tree["Kerbin Capture"].get_index().clone(),
-            menu_tree["Eve Intercept"].get_index().clone(),
+            menu_tree["Kerbin Capture"].index().clone(),
+            menu_tree["Eve Intercept"].index().clone(),
             90,
         );
         graph.add_edge(
-            menu_tree["Eve Intercept"].get_index().clone(),
-            menu_tree["Eve Capture (100km - 85Mm)"].get_index().clone(),
+            menu_tree["Eve Intercept"].index().clone(),
+            menu_tree["Eve Capture (100km - 85Mm)"].index().clone(),
             80,
         );
         graph.add_edge(
-            menu_tree["Eve Capture (100km - 85Mm)"].get_index().clone(),
-            menu_tree["Low Eve Orbit (100km)"].get_index().clone(),
+            menu_tree["Eve Capture (100km - 85Mm)"].index().clone(),
+            menu_tree["Low Eve Orbit (100km)"].index().clone(),
             1350,
         );
         graph.add_edge(
-            menu_tree["Low Eve Orbit (100km)"].get_index().clone(),
-            menu_tree["Eve Surface"].get_index().clone(),
+            menu_tree["Low Eve Orbit (100km)"].index().clone(),
+            menu_tree["Eve Surface"].index().clone(),
             8000,
         );
         // region Gilly
         graph.add_edge(
-            menu_tree["Eve Capture (100km - 85Mm)"].get_index().clone(),
-            menu_tree["Gilly Intercept"].get_index().clone(),
+            menu_tree["Eve Capture (100km - 85Mm)"].index().clone(),
+            menu_tree["Gilly Intercept"].index().clone(),
             60,
         );
         graph.add_edge(
-            menu_tree["Gilly Intercept"].get_index().clone(),
-            menu_tree["Low Gilly Orbit (10km)"].get_index().clone(),
+            menu_tree["Gilly Intercept"].index().clone(),
+            menu_tree["Low Gilly Orbit (10km)"].index().clone(),
             410,
         );
         graph.add_edge(
-            menu_tree["Low Gilly Orbit (10km)"].get_index().clone(),
-            menu_tree["Gilly Surface"].get_index().clone(),
+            menu_tree["Low Gilly Orbit (10km)"].index().clone(),
+            menu_tree["Gilly Surface"].index().clone(),
             30,
         );
         // endregion Gilly
         // endregion Eve
         // region Duna
         graph.add_edge(
-            menu_tree["Kerbin Capture"].get_index().clone(),
-            menu_tree["Duna Intercept"].get_index().clone(),
+            menu_tree["Kerbin Capture"].index().clone(),
+            menu_tree["Duna Intercept"].index().clone(),
             130,
         );
         graph.add_edge(
-            menu_tree["Duna Intercept"].get_index().clone(),
-            menu_tree["Duna Capture (60km - 48Mm)"].get_index().clone(),
+            menu_tree["Duna Intercept"].index().clone(),
+            menu_tree["Duna Capture (60km - 48Mm)"].index().clone(),
             250,
         );
         graph.add_edge(
-            menu_tree["Duna Capture (60km - 48Mm)"].get_index().clone(),
-            menu_tree["Low Duna Orbit (60km)"].get_index().clone(),
+            menu_tree["Duna Capture (60km - 48Mm)"].index().clone(),
+            menu_tree["Low Duna Orbit (60km)"].index().clone(),
             360,
         );
         graph.add_edge(
-            menu_tree["Low Duna Orbit (60km)"].get_index().clone(),
-            menu_tree["Duna Surface"].get_index().clone(),
+            menu_tree["Low Duna Orbit (60km)"].index().clone(),
+            menu_tree["Duna Surface"].index().clone(),
             1450,
         );
         // region Ike
         graph.add_edge(
-            menu_tree["Duna Capture (60km - 48Mm)"].get_index().clone(),
-            menu_tree["Ike Intercept"].get_index().clone(),
+            menu_tree["Duna Capture (60km - 48Mm)"].index().clone(),
+            menu_tree["Ike Intercept"].index().clone(),
             30,
         );
         graph.add_edge(
-            menu_tree["Ike Intercept"].get_index().clone(),
-            menu_tree["Low Ike Orbit (10km)"].get_index().clone(),
+            menu_tree["Ike Intercept"].index().clone(),
+            menu_tree["Low Ike Orbit (10km)"].index().clone(),
             180,
         );
         graph.add_edge(
-            menu_tree["Low Ike Orbit (10km)"].get_index().clone(),
-            menu_tree["Ike Surface"].get_index().clone(),
+            menu_tree["Low Ike Orbit (10km)"].index().clone(),
+            menu_tree["Ike Surface"].index().clone(),
             390,
         );
         // endregion Ike
         // endregion Duna
         // region Jool
         graph.add_edge(
-            menu_tree["Kerbin Capture"].get_index().clone(),
-            menu_tree["Jool Intercept"].get_index().clone(),
+            menu_tree["Kerbin Capture"].index().clone(),
+            menu_tree["Jool Intercept"].index().clone(),
             980,
         );
         graph.add_edge(
-            menu_tree["Jool Intercept"].get_index().clone(),
+            menu_tree["Jool Intercept"].index().clone(),
             menu_tree["Jool Capture (210km - 268Mm)"]
-                .get_index()
+                .index()
                 .clone(),
             160,
         );
         graph.add_edge(
             menu_tree["Jool Capture (210km - 268Mm)"]
-                .get_index()
+                .index()
                 .clone(),
-            menu_tree["Low Jool Orbit (210km)"].get_index().clone(),
+            menu_tree["Low Jool Orbit (210km)"].index().clone(),
             2810,
         );
         graph.add_edge(
-            menu_tree["Low Jool Orbit (210km)"].get_index().clone(),
-            menu_tree["Jool Surface"].get_index().clone(),
+            menu_tree["Low Jool Orbit (210km)"].index().clone(),
+            menu_tree["Jool Surface"].index().clone(),
             14000,
         );
         // region Pol
         graph.add_edge(
             menu_tree["Jool Capture (210km - 268Mm)"]
-                .get_index()
+                .index()
                 .clone(),
-            menu_tree["Pol Intercept"].get_index().clone(),
+            menu_tree["Pol Intercept"].index().clone(),
             160,
         );
         graph.add_edge(
-            menu_tree["Pol Intercept"].get_index().clone(),
-            menu_tree["Low Pol Orbit (10km)"].get_index().clone(),
+            menu_tree["Pol Intercept"].index().clone(),
+            menu_tree["Low Pol Orbit (10km)"].index().clone(),
             820,
         );
         graph.add_edge(
-            menu_tree["Low Pol Orbit (10km)"].get_index().clone(),
-            menu_tree["Pol Surface"].get_index().clone(),
+            menu_tree["Low Pol Orbit (10km)"].index().clone(),
+            menu_tree["Pol Surface"].index().clone(),
             130,
         );
         // endregion Pol
         // region Bop
         graph.add_edge(
             menu_tree["Jool Capture (210km - 268Mm)"]
-                .get_index()
+                .index()
                 .clone(),
-            menu_tree["Bop Intercept"].get_index().clone(),
+            menu_tree["Bop Intercept"].index().clone(),
             220,
         );
         graph.add_edge(
-            menu_tree["Bop Intercept"].get_index().clone(),
-            menu_tree["Low Bop Orbit (30km)"].get_index().clone(),
+            menu_tree["Bop Intercept"].index().clone(),
+            menu_tree["Low Bop Orbit (30km)"].index().clone(),
             900,
         );
         graph.add_edge(
-            menu_tree["Low Bop Orbit (30km)"].get_index().clone(),
-            menu_tree["Bop Surface"].get_index().clone(),
+            menu_tree["Low Bop Orbit (30km)"].index().clone(),
+            menu_tree["Bop Surface"].index().clone(),
             230,
         );
         // endregion Bop
         // region Tylo
         graph.add_edge(
             menu_tree["Jool Capture (210km - 268Mm)"]
-                .get_index()
+                .index()
                 .clone(),
-            menu_tree["Tylo Intercept"].get_index().clone(),
+            menu_tree["Tylo Intercept"].index().clone(),
             400,
         );
         graph.add_edge(
-            menu_tree["Tylo Intercept"].get_index().clone(),
-            menu_tree["Low Tylo Orbit (10km)"].get_index().clone(),
+            menu_tree["Tylo Intercept"].index().clone(),
+            menu_tree["Low Tylo Orbit (10km)"].index().clone(),
             1100,
         );
         graph.add_edge(
-            menu_tree["Low Tylo Orbit (10km)"].get_index().clone(),
-            menu_tree["Tylo Surface"].get_index().clone(),
+            menu_tree["Low Tylo Orbit (10km)"].index().clone(),
+            menu_tree["Tylo Surface"].index().clone(),
             2270,
         );
         // endregion Tylo
         // region Vall
         graph.add_edge(
             menu_tree["Jool Capture (210km - 268Mm)"]
-                .get_index()
+                .index()
                 .clone(),
-            menu_tree["Vall Intercept"].get_index().clone(),
+            menu_tree["Vall Intercept"].index().clone(),
             620,
         );
         graph.add_edge(
-            menu_tree["Vall Intercept"].get_index().clone(),
-            menu_tree["Low Vall Orbit (15km)"].get_index().clone(),
+            menu_tree["Vall Intercept"].index().clone(),
+            menu_tree["Low Vall Orbit (15km)"].index().clone(),
             910,
         );
         graph.add_edge(
-            menu_tree["Low Vall Orbit (15km)"].get_index().clone(),
-            menu_tree["Vall Surface"].get_index().clone(),
+            menu_tree["Low Vall Orbit (15km)"].index().clone(),
+            menu_tree["Vall Surface"].index().clone(),
             860,
         );
         // endregion Vall
         // region Laythe
         graph.add_edge(
             menu_tree["Jool Capture (210km - 268Mm)"]
-                .get_index()
+                .index()
                 .clone(),
-            menu_tree["Laythe Intercept"].get_index().clone(),
+            menu_tree["Laythe Intercept"].index().clone(),
             930,
         );
         graph.add_edge(
-            menu_tree["Laythe Intercept"].get_index().clone(),
-            menu_tree["Low Laythe Orbit (60km)"].get_index().clone(),
+            menu_tree["Laythe Intercept"].index().clone(),
+            menu_tree["Low Laythe Orbit (60km)"].index().clone(),
             1070,
         );
         graph.add_edge(
-            menu_tree["Low Laythe Orbit (60km)"].get_index().clone(),
-            menu_tree["Laythe Surface"].get_index().clone(),
+            menu_tree["Low Laythe Orbit (60km)"].index().clone(),
+            menu_tree["Laythe Surface"].index().clone(),
             2900,
         );
         // endregion Vall
         // endregion Jool
         // region Dres
         graph.add_edge(
-            menu_tree["Kerbin Capture"].get_index().clone(),
-            menu_tree["Dres Intercept"].get_index().clone(),
+            menu_tree["Kerbin Capture"].index().clone(),
+            menu_tree["Dres Intercept"].index().clone(),
             610,
         );
         graph.add_edge(
-            menu_tree["Dres Intercept"].get_index().clone(),
-            menu_tree["Low Dres Orbit (12km)"].get_index().clone(),
+            menu_tree["Dres Intercept"].index().clone(),
+            menu_tree["Low Dres Orbit (12km)"].index().clone(),
             1290,
         );
         graph.add_edge(
-            menu_tree["Low Dres Orbit (12km)"].get_index().clone(),
-            menu_tree["Dres Surface"].get_index().clone(),
+            menu_tree["Low Dres Orbit (12km)"].index().clone(),
+            menu_tree["Dres Surface"].index().clone(),
             430,
         );
         // endregion Dres
         // region Moho
         graph.add_edge(
-            menu_tree["Kerbin Capture"].get_index().clone(),
-            menu_tree["Moho Intercept"].get_index().clone(),
+            menu_tree["Kerbin Capture"].index().clone(),
+            menu_tree["Moho Intercept"].index().clone(),
             760,
         );
         graph.add_edge(
-            menu_tree["Moho Intercept"].get_index().clone(),
-            menu_tree["Low Moho Orbit (20km)"].get_index().clone(),
+            menu_tree["Moho Intercept"].index().clone(),
+            menu_tree["Low Moho Orbit (20km)"].index().clone(),
             2410,
         );
         graph.add_edge(
-            menu_tree["Low Moho Orbit (20km)"].get_index().clone(),
-            menu_tree["Moho Surface"].get_index().clone(),
+            menu_tree["Low Moho Orbit (20km)"].index().clone(),
+            menu_tree["Moho Surface"].index().clone(),
             870,
         );
         // endregion Moho
         // region Eeloo
         graph.add_edge(
-            menu_tree["Kerbin Capture"].get_index().clone(),
-            menu_tree["Eeloo Intercept"].get_index().clone(),
+            menu_tree["Kerbin Capture"].index().clone(),
+            menu_tree["Eeloo Intercept"].index().clone(),
             1140,
         );
         graph.add_edge(
-            menu_tree["Eeloo Intercept"].get_index().clone(),
-            menu_tree["Low Eeloo Orbit (10km)"].get_index().clone(),
+            menu_tree["Eeloo Intercept"].index().clone(),
+            menu_tree["Low Eeloo Orbit (10km)"].index().clone(),
             1370,
         );
         graph.add_edge(
-            menu_tree["Low Eeloo Orbit (10km)"].get_index().clone(),
-            menu_tree["Eeloo Surface"].get_index().clone(),
+            menu_tree["Low Eeloo Orbit (10km)"].index().clone(),
+            menu_tree["Eeloo Surface"].index().clone(),
             620,
         );
         // endregion Moho
         graph.add_edge(
-            menu_tree["Kerbin Capture"].get_index().clone(),
+            menu_tree["Kerbin Capture"].index().clone(),
             menu_tree["Elliptical Kerbol Orbit (610km - 13,600Mm)"]
-                .get_index()
+                .index()
                 .clone(),
             6000,
         );
         graph.add_edge(
             menu_tree["Elliptical Kerbol Orbit (610km - 13,600Mm)"]
-                .get_index()
+                .index()
                 .clone(),
-            menu_tree["Low Kerbol Orbit (610km)"].get_index().clone(),
+            menu_tree["Low Kerbol Orbit (610km)"].index().clone(),
             13700,
         );
         graph.add_edge(
-            menu_tree["Low Kerbol Orbit (610km)"].get_index().clone(),
-            menu_tree["Kerbol Surface"].get_index().clone(),
+            menu_tree["Low Kerbol Orbit (610km)"].index().clone(),
+            menu_tree["Kerbol Surface"].index().clone(),
             67000,
         );
         // endregion Kerbol
@@ -960,18 +960,18 @@ mod tests {
         };
 
         graph.add_edge(
-            menu_tree["Node1"].get_index().clone(),
-            menu_tree["Node2"].get_index().clone(),
+            menu_tree["Node1"].index().clone(),
+            menu_tree["Node2"].index().clone(),
             900,
         );
         graph.add_edge(
-            menu_tree["Node2"].get_index().clone(),
-            menu_tree["Node3"].get_index().clone(),
+            menu_tree["Node2"].index().clone(),
+            menu_tree["Node3"].index().clone(),
             80,
         );
         graph.add_edge(
-            menu_tree["Node3"].get_index().clone(),
-            menu_tree["Node4"].get_index().clone(),
+            menu_tree["Node3"].index().clone(),
+            menu_tree["Node4"].index().clone(),
             50,
         );
 
@@ -993,7 +993,7 @@ mod tests {
 
     #[test]
     fn test_stock() {
-        let _ = DeltavMap::get_stock();
+        let _ = DeltavMap::stock();
     }
 
     #[test]

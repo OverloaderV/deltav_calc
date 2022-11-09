@@ -13,7 +13,7 @@ pub struct NoSuchNodeError {
 }
 
 impl NoSuchNodeError {
-    pub fn get_cause_name(&self) -> &str {
+    pub fn cause_name(&self) -> &str {
         &self.name
     }
 }
@@ -42,7 +42,7 @@ pub enum MenuTree {
 
 impl MenuTree {
     /// Gets the id of the node. if it's a middle node it panics
-    pub(crate) fn get_index(&self) -> &NodeIndex {
+    pub(crate) fn index(&self) -> &NodeIndex {
         match self {
             MenuTree::MiddleNode { .. } => {
                 panic!("MiddleNodes don't have indices");
@@ -51,7 +51,7 @@ impl MenuTree {
         }
     }
 
-    pub fn get_name(&self) -> &str {
+    pub fn name(&self) -> &str {
         return match self {
             MenuTree::MiddleNode { name, .. } | MenuTree::EndNode { name, .. } => name.as_str(),
         };
@@ -148,7 +148,7 @@ pub mod tests {
                 panic!("{}", e)
             }
             Ok(result) => {
-                assert_eq!(result.get_name(), "Category2");
+                assert_eq!(result.name(), "Category2");
             }
         }
 
@@ -158,8 +158,8 @@ pub mod tests {
                 panic!("{}", e)
             }
             Ok(result) => {
-                assert_eq!(result.get_name(), "Node1");
-                assert_eq!(result.get_index().index(), 0);
+                assert_eq!(result.name(), "Node1");
+                assert_eq!(result.index().index(), 0);
             }
         }
     }
@@ -167,7 +167,7 @@ pub mod tests {
     #[test]
     #[should_panic(expected = "MiddleNodes don't have indices")]
     fn test_get_index_panic() {
-        get_test_tree().get_index();
+        get_test_tree().index();
     }
 
     #[test]
@@ -186,11 +186,11 @@ pub mod tests {
         let test_tree = get_test_tree();
 
         let result = &test_tree["Category2"];
-        assert_eq!(result.get_name(), "Category2");
+        assert_eq!(result.name(), "Category2");
 
         let result = &test_tree["Node1"];
-        assert_eq!(result.get_name(), "Node1");
-        assert_eq!(result.get_index().index(), 0);
+        assert_eq!(result.name(), "Node1");
+        assert_eq!(result.index().index(), 0);
     }
 
     #[test]
