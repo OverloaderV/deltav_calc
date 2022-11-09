@@ -1,5 +1,5 @@
 use std::sync::{Arc, Mutex};
-use gtk::{Application, ApplicationWindow, Box, Button, Expander, Inhibit, Label, Orientation, Widget, Window};
+use gtk::{Application, ApplicationWindow, Box, Button, Expander, Inhibit, Label, Orientation, ScrolledWindow, Widget, Window};
 use gtk::prelude::*;
 use deltav_calc::{DeltavMap, MenuTree};
 
@@ -30,16 +30,22 @@ fn build_ui(app: &Application) {
     // The window for the node selection
     let select_window = Arc::new(Window::builder()
         .title("Select a node")
+        .width_request(700)
+        .height_request(300)
+        .resizable(false)
+        .maximized(false)
         .build());
 
     // THe button to click when you want to set te start node
     let origin_button = Arc::new(Button::builder()
         .label("Click here to select the start")
+        .width_request(300)
         .build());
 
     // THe button to click when you want to set te end node
     let target_button = Arc::new(Button::builder()
         .label("Click here to select the end")
+        .width_request(300)
         .build());
     // When clicked open the selection window
     let sel_clone = sel.clone();
@@ -64,7 +70,9 @@ fn build_ui(app: &Application) {
         show_selection(&select_window_clone, &origin_button_clone, &target_button_clone);
     });
 
-    let result_label = Label::new(None);
+    let result_label = Label::builder()
+        .width_request(300)
+        .build();
     set_result(&result_label, &map,origin_button.label().unwrap().as_str(), target_button.label().unwrap().as_str());
 
     // Build the layout everything is put in
@@ -80,7 +88,9 @@ fn build_ui(app: &Application) {
     let select_window_clone = select_window.clone();
     let origin_button_clone = origin_button.clone();
     let target_button_clone = target_button.clone();
-    let selection_tree = build_tree(
+    let selection_tree = ScrolledWindow::builder()
+        .width_request(100)
+        .child(&build_tree(
         map.get_menu_tree(),
         Arc::new(move |button: &Button| {
             selected(button.label().unwrap().as_str(),
@@ -90,7 +100,8 @@ fn build_ui(app: &Application) {
                      &result_label,
                      &map_clone,
                      &select_window_clone);
-        }));
+        })))
+        .build();
     select_window.set_child(Some(&selection_tree));
 
     let origin_button_clone = origin_button.clone();
@@ -106,6 +117,8 @@ fn build_ui(app: &Application) {
         .application(app)
         .child(&layout)
         .hide_on_close(false)
+        .width_request(900)
+        .resizable(false)
         .build();
     window.show();
 }
@@ -148,11 +161,13 @@ fn build_tree(tree: &MenuTree, click_callback: Arc<impl Fn(&Button) + 'static>) 
         MenuTree::MiddleNode { name, children } => {
             let layout = Box::builder()
                 .orientation(Orientation::Vertical)
+                .width_request(100)
                 .margin_start(10)
                 .build();
 
             let expander = Expander::builder()
                 .label(&name)
+                .width_request(50)
                 .child(&layout)
                 .build();
 
@@ -167,6 +182,7 @@ fn build_tree(tree: &MenuTree, click_callback: Arc<impl Fn(&Button) + 'static>) 
         MenuTree::EndNode { name, .. } => {
             let button = Button::builder()
                 .label(&name)
+                .width_request(100)
                 .build();
             button.connect_clicked(move |button| {
                 click_callback(button);
