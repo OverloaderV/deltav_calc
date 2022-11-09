@@ -1,13 +1,12 @@
 use petgraph::graph::NodeIndex;
 use serde::Deserialize;
-#[cfg(test)]
 use serde::Serialize;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::Index;
 
 /// This error is raised when a node is searched that doesn't exist. It saves the nodes name
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct NoSuchNodeError {
     name: String,
 }
@@ -31,8 +30,7 @@ impl Display for NoSuchNodeError {
 impl Error for NoSuchNodeError {}
 
 /// The menu trees represent nodes in the delta-v map and the categories they are put into
-#[derive(Deserialize)]
-#[cfg_attr(test, derive(PartialEq, Debug, Serialize))]
+#[derive(Deserialize, Serialize, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum MenuTree {
     /// A node representing a category other nodes can be put into
     MiddleNode {

@@ -11,7 +11,6 @@ use crate::MenuTree::{EndNode, MiddleNode};
 use petgraph::algo;
 use petgraph::graph::{NodeIndex, UnGraph};
 use serde::Deserialize;
-#[cfg(test)]
 use serde::Serialize;
 
 /// Represents a usable deltav map
@@ -87,8 +86,7 @@ use serde::Serialize;
 ///   }
 /// }
 /// ```
-#[derive(Deserialize)]
-#[cfg_attr(test, derive(Debug, Serialize))]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct DeltavMap {
     menu_tree: MenuTree,
     graph: UnGraph<String, i32>,
