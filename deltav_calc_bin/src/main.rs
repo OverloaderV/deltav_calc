@@ -22,20 +22,14 @@ enum Selection {
 // Builds the ui
 fn build_ui(app: &Application) {
     // The deltav map to use
-    let map = DeltavMap::get_stock();
+    let map = Arc::new(DeltavMap::get_stock());
 
     // Defines if the origin or the target should be selected
     let sel = Arc::new(Mutex::new(Selection::ORIGIN));
 
-    // The tree to select a node
-    let selection_tree = build_tree(
-        map.get_menu_tree(),
-        |button: &Button| {println!("{}", button.label().unwrap().as_str())});
-
     // The window for the node selection
     let select_window = Arc::new(Window::builder()
         .title("Select a node")
-        .child(&selection_tree)
         .build());
 
     // THe button to click when you want to set te start node
@@ -76,6 +70,22 @@ fn build_ui(app: &Application) {
     BoxExt::append(&layout, &origin_button);
     BoxExt::append(&layout, &result_label);
     BoxExt::append(&layout, &target_button);
+
+    let sel_clone = sel.clone();
+    let map_clone = map.clone();
+    let select_window_clone = select_window.clone();
+    let selection_tree = build_tree(
+        map.get_menu_tree(),
+        Arc::new(move |button: &Button| {
+            selected(button.label().unwrap().as_str(),
+                     &sel_clone,
+                     &origin_button,
+                     &target_button,
+                     &result_label,
+                     &map_clone,
+                     &select_window_clone);
+        }));
+    select_window.set_child(Some(&selection_tree));
 
     // Build the final window
     let window = ApplicationWindow::builder()
@@ -118,7 +128,7 @@ fn set_result(result_label: &Label, map: &DeltavMap, start: &str, end: &str) {
 }
 
 // Builds the node selection tree
-fn build_tree(tree: &MenuTree, click_callback: fn(&Button)) -> Widget{
+fn build_tree(tree: &MenuTree, click_callback: Arc<impl Fn(&Button) + 'static>) -> Widget{
     return match tree {
         MenuTree::MiddleNode { name, children } => {
             let layout = Box::builder()
@@ -132,7 +142,8 @@ fn build_tree(tree: &MenuTree, click_callback: fn(&Button)) -> Widget{
                 .build();
 
             for child in children {
-                BoxExt::append(&layout, &build_tree(child, click_callback))
+                let cloned_callback = click_callback.clone();
+                BoxExt::append(&layout, &build_tree(child, cloned_callback))
             }
 
             Widget::from(expander)
@@ -142,12 +153,26 @@ fn build_tree(tree: &MenuTree, click_callback: fn(&Button)) -> Widget{
             let button = Button::builder()
                 .label(&name)
                 .build();
-            let click_callback_clone = click_callback.clone();
             button.connect_clicked(move |button| {
-                click_callback_clone(button);
+                click_callback(button);
             });
 
             Widget::from(button)
         }
     }
+}
+
+// Updates the selected button and the result label
+fn selected(selection: &str, to_change: &Arc<Mutex<Selection>>, start: &Button, end: &Button, result: &Label, map: &DeltavMap, select_window: &Arc<Window>) {
+    let to_change = to_change.lock().unwrap();
+    match *to_change {
+        Selection::ORIGIN => {
+            start.set_label(selection);
+        }
+        Selection::TARGET => {
+            end.set_label(selection);
+        }
+    }
+    set_result(result, map, start.label().unwrap().as_str(), end.label().unwrap().as_str());
+    select_window.hide();
 }
