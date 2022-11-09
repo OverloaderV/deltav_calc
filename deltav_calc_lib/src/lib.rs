@@ -8,8 +8,8 @@ mod menutree;
 
 pub use crate::menutree::{MenuTree, NoSuchNodeError};
 use crate::MenuTree::{EndNode, MiddleNode};
-use petgraph::graph::{NodeIndex, UnGraph};
 use petgraph::algo;
+use petgraph::graph::{NodeIndex, UnGraph};
 use serde::Deserialize;
 #[cfg(test)]
 use serde::Serialize;
@@ -104,22 +104,28 @@ impl DeltavMap {
     ///
     /// Returns a [`NoSuchNodeError`] If either start or end aren't valid nodes
     /// Returns `None` if there is no path between nodes. If this happens, the map is probably malformed
-    pub fn calculate_delta_v(&self, start: &str, end: &str) -> Result<Option<i32>, NoSuchNodeError> {
+    pub fn calculate_delta_v(
+        &self,
+        start: &str,
+        end: &str,
+    ) -> Result<Option<i32>, NoSuchNodeError> {
         match self.menu_tree.search(start) {
-            Err(e) => {
-                Err(e)
-            }
+            Err(e) => Err(e),
             Ok(start) => {
                 return match self.menu_tree.search(end) {
-                    Err(e) => {
-                        Err(e)
-                    }
+                    Err(e) => Err(e),
                     Ok(end) => {
-                        let result: Option<(i32, Vec<NodeIndex>)> = algo::astar(&self.graph, start.index().clone(), |finish| finish == end.index().clone(), |e| *e.weight(), |_| 0);
+                        let result: Option<(i32, Vec<NodeIndex>)> = algo::astar(
+                            &self.graph,
+                            start.index().clone(),
+                            |finish| finish == end.index().clone(),
+                            |e| *e.weight(),
+                            |_| 0,
+                        );
 
                         match result {
-                            None => { Ok(None) }
-                            Some(result) => { Ok(Some(result.0)) }
+                            None => Ok(None),
+                            Some(result) => Ok(Some(result.0)),
                         }
                     }
                 }
@@ -594,9 +600,7 @@ impl DeltavMap {
         );
         graph.add_edge(
             menu_tree["Low Kerbin Orbit (80km)"].index().clone(),
-            menu_tree["Keostationary Orbit (2.868Mm)"]
-                .index()
-                .clone(),
+            menu_tree["Keostationary Orbit (2.868Mm)"].index().clone(),
             1115,
         );
         graph.add_edge(
@@ -725,15 +729,11 @@ impl DeltavMap {
         );
         graph.add_edge(
             menu_tree["Jool Intercept"].index().clone(),
-            menu_tree["Jool Capture (210km - 268Mm)"]
-                .index()
-                .clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"].index().clone(),
             160,
         );
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"]
-                .index()
-                .clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"].index().clone(),
             menu_tree["Low Jool Orbit (210km)"].index().clone(),
             2810,
         );
@@ -744,9 +744,7 @@ impl DeltavMap {
         );
         // region Pol
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"]
-                .index()
-                .clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"].index().clone(),
             menu_tree["Pol Intercept"].index().clone(),
             160,
         );
@@ -763,9 +761,7 @@ impl DeltavMap {
         // endregion Pol
         // region Bop
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"]
-                .index()
-                .clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"].index().clone(),
             menu_tree["Bop Intercept"].index().clone(),
             220,
         );
@@ -782,9 +778,7 @@ impl DeltavMap {
         // endregion Bop
         // region Tylo
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"]
-                .index()
-                .clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"].index().clone(),
             menu_tree["Tylo Intercept"].index().clone(),
             400,
         );
@@ -801,9 +795,7 @@ impl DeltavMap {
         // endregion Tylo
         // region Vall
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"]
-                .index()
-                .clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"].index().clone(),
             menu_tree["Vall Intercept"].index().clone(),
             620,
         );
@@ -820,9 +812,7 @@ impl DeltavMap {
         // endregion Vall
         // region Laythe
         graph.add_edge(
-            menu_tree["Jool Capture (210km - 268Mm)"]
-                .index()
-                .clone(),
+            menu_tree["Jool Capture (210km - 268Mm)"].index().clone(),
             menu_tree["Laythe Intercept"].index().clone(),
             930,
         );
@@ -999,7 +989,10 @@ mod tests {
     #[test]
     fn calculate_cost() {
         let test_map = get_test_map();
-        let cost = test_map.calculate_delta_v("Node1", "Node4").unwrap().unwrap();
+        let cost = test_map
+            .calculate_delta_v("Node1", "Node4")
+            .unwrap()
+            .unwrap();
 
         assert_eq!(cost, 1030);
     }

@@ -1,15 +1,15 @@
-use std::error::Error;
-use std::fmt::{Debug, Display, Formatter};
 use petgraph::graph::NodeIndex;
 use serde::Deserialize;
 #[cfg(test)]
 use serde::Serialize;
+use std::error::Error;
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::Index;
 
 /// This error is raised when a node is searched that doesn't exist. It saves the nodes name
 #[derive(Debug)]
 pub struct NoSuchNodeError {
-    name: String
+    name: String,
 }
 
 impl NoSuchNodeError {
@@ -20,7 +20,11 @@ impl NoSuchNodeError {
 
 impl Display for NoSuchNodeError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "There is no node with the name \"{}\" in the tree", self.name)
+        write!(
+            f,
+            "There is no node with the name \"{}\" in the tree",
+            self.name
+        )
     }
 }
 
@@ -66,7 +70,9 @@ impl MenuTree {
                 if name == search_name {
                     Ok(self)
                 } else {
-                    Err(NoSuchNodeError {name: search_name.to_string()})
+                    Err(NoSuchNodeError {
+                        name: search_name.to_string(),
+                    })
                 }
             }
 
@@ -79,12 +85,14 @@ impl MenuTree {
                     let result = child.search(search_name);
 
                     match result {
-                        Ok(_) => {return result}
+                        Ok(_) => return result,
                         Err(_) => {}
                     }
                 }
 
-                Err(NoSuchNodeError {name: search_name.to_string()})
+                Err(NoSuchNodeError {
+                    name: search_name.to_string(),
+                })
             }
         }
     }
@@ -95,8 +103,10 @@ impl Index<&str> for MenuTree {
 
     fn index(&self, index: &str) -> &Self::Output {
         match self.search(index) {
-            Ok(result) => {result}
-            Err(e) => {panic!("{e}")}
+            Ok(result) => result,
+            Err(e) => {
+                panic!("{e}")
+            }
         }
     }
 }
