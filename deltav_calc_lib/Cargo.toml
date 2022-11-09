@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Overloader<overloader@utanota.com>"]
 edition = "2021"
 description = "Allows you to generate a graph representing a delta'v map used in the game Kerbal Space Program."
+repository = "https://github.com/OverloaderV/deltav_calc/tree/master/deltav_calc_lib"
 license = "BSD-3-Clause"
 
 [dependencies]
