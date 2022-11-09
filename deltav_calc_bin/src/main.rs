@@ -67,9 +67,9 @@ fn build_ui(app: &Application) {
     let layout = Box::builder()
         .orientation(Orientation::Horizontal)
         .build();
-    BoxExt::append(&layout, &origin_button);
-    BoxExt::append(&layout, &result_label);
-    BoxExt::append(&layout, &target_button);
+    layout.append(&origin_button);
+    layout.append(&result_label);
+    layout.append(&target_button);
 
     let sel_clone = sel.clone();
     let map_clone = map.clone();
@@ -143,7 +143,7 @@ fn build_tree(tree: &MenuTree, click_callback: Arc<impl Fn(&Button) + 'static>) 
 
             for child in children {
                 let cloned_callback = click_callback.clone();
-                BoxExt::append(&layout, &build_tree(child, cloned_callback))
+                layout.append(&build_tree(child, cloned_callback));
             }
 
             Widget::from(expander)
