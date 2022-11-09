@@ -25,7 +25,7 @@ enum Selection {
 // Builds the ui
 fn build_ui(app: &Application) {
     // The deltav map to use
-    let map = Arc::new(DeltavMap::stock());
+    let map = Arc::new(DeltavMap::new_stock());
 
     // Defines if the origin or the target should be selected
     let sel = Arc::new(Mutex::new(Selection::ORIGIN));

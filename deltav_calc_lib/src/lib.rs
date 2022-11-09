@@ -210,7 +210,7 @@ impl DeltavMap {
     /// ├── Low Kerbol Orbit (610km)
     /// └── Kerbol Surface
     /// ```
-    pub fn stock() -> DeltavMap {
+    pub fn new_stock() -> DeltavMap {
         let mut graph: UnGraph<String, i32> = UnGraph::new_undirected();
 
         let menu_tree = MiddleNode {
@@ -983,7 +983,7 @@ mod tests {
 
     #[test]
     fn test_stock() {
-        let _ = DeltavMap::stock();
+        let _ = DeltavMap::new_stock();
     }
 
     #[test]
