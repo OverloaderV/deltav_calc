@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
-use gtk::{Application, ApplicationWindow, Box, Button, Label, Orientation};
+use gtk::{Application, ApplicationWindow, Box, Button, Expander, Label, Orientation, Widget, Window};
 use gtk::prelude::*;
-use deltav_calc::DeltavMap;
+use deltav_calc::{DeltavMap, MenuTree};
 
 const APP_ID: &str = "vck.zll.deltav_calc";
 
@@ -25,7 +25,18 @@ fn build_ui(app: &Application) {
     let map = DeltavMap::get_stock();
 
     // Defines if the origin or the target should be selected
-    let sel: Arc<Mutex<Selection>> = Arc::new(Mutex::new(Selection::ORIGIN));
+    let sel = Arc::new(Mutex::new(Selection::ORIGIN));
+
+    // The tree to select a node
+    let selection_tree = build_tree(
+        map.get_menu_tree(),
+        |button: &Button| {println!("{}", button.label().unwrap().as_str())});
+
+    // The window for the node selection
+    let select_window = Arc::new(Window::builder()
+        .title("Select a node")
+        .child(&selection_tree)
+        .build());
 
     // THe button to click when you want to set te start node
     let origin_button = Button::builder()
@@ -33,11 +44,12 @@ fn build_ui(app: &Application) {
         .build();
     // When clicked open the selection window
     let sel_clone = sel.clone();
+    let select_window_clone = select_window.clone();
     origin_button.connect_clicked(move |_| {
         let mut sel = sel_clone.lock().unwrap();
         *sel = Selection::ORIGIN;
         drop(sel);
-        show_selection();
+        show_selection(&select_window_clone);
     });
 
     // THe button to click when you want to set te end node
@@ -46,11 +58,12 @@ fn build_ui(app: &Application) {
         .build();
     // When clicked open the selection window
     let sel_clone = sel.clone();
+    let select_window_clone = select_window.clone();
     target_button.connect_clicked(move |_| {
         let mut sel = sel_clone.lock().unwrap();
         *sel = Selection::TARGET;
         drop(sel);
-        show_selection();
+        show_selection(&select_window_clone);
     });
 
     let result_label = Label::new(None);
@@ -69,13 +82,14 @@ fn build_ui(app: &Application) {
         .title("Deltav Calculator")
         .application(app)
         .child(&layout)
+        .hide_on_close(false)
         .build();
     window.show();
 }
 
 // Gets called when a node should be selected
-fn show_selection() {
-
+fn show_selection(select_window: &Arc<Window>) {
+    select_window.show();
 }
 
 // Uses the map to calculate the delta v needed to get from start to end and puts it into the result label
@@ -99,6 +113,41 @@ fn set_result(result_label: &Label, map: &DeltavMap, start: &str, end: &str) {
                     result_label.set_label(&result.to_string());
                 }
             }
+        }
+    }
+}
+
+// Builds the node selection tree
+fn build_tree(tree: &MenuTree, click_callback: fn(&Button)) -> Widget{
+    return match tree {
+        MenuTree::MiddleNode { name, children } => {
+            let layout = Box::builder()
+                .orientation(Orientation::Vertical)
+                .margin_start(10)
+                .build();
+
+            let expander = Expander::builder()
+                .label(&name)
+                .child(&layout)
+                .build();
+
+            for child in children {
+                BoxExt::append(&layout, &build_tree(child, click_callback))
+            }
+
+            Widget::from(expander)
+        }
+
+        MenuTree::EndNode { name, .. } => {
+            let button = Button::builder()
+                .label(&name)
+                .build();
+            let click_callback_clone = click_callback.clone();
+            button.connect_clicked(move |button| {
+                click_callback_clone(button);
+            });
+
+            Widget::from(button)
         }
     }
 }
