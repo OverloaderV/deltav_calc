@@ -5,6 +5,7 @@ authors = ["Overloader<overloader@utanota.com>"]
 edition = "2021"
 description = "A simple ui to calculate the deltav requirements"
 license = "BSD-3-Clause"
+publish = false
 
 
 [dependencies]
